@@ -1,0 +1,27 @@
+name: check
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout v7
+        with:
+          persist-credentials: false
+
+      # Все инструменты, включая .NET SDK, ставит mise из [tools] mise.toml
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # jdx/mise-action v3
+
+      - name: Run all checks
+        run: mise run check

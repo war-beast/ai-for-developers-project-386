@@ -1,0 +1,48 @@
+# CallCalendar — ASP.NET Core MVC + React/Vite, 3-слойная архитектура
+
+## Структура солюшена
+
+- `src/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
+- `src/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
+- `src/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
+- `src/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
+
+Структурные папки BLL и DAL нельзя удалять; каждая из них содержит файл-плейсхолдер
+`.gitkeep`, чтобы отображаться в Solution Explorer. Новые классы кладутся в
+соответствующую папку по смыслу.
+
+Зависимости строго односторонние: `CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL`.
+`CallCalendar.Tests` ссылается только на BLL.
+
+## Контракт API и фронтенд
+
+- Контракт описывается в **TypeSpec**: `api/main.tsp` (+ `api/tspconfig.yaml`).
+- `openapi.yaml` эмитится командой `mise run openapi` (не правится руками).
+- Клиентский SDK для TypeScript: сгенерированные типы в `frontend/src/api/schema.d.ts`
+  (обновление — `mise run sdk`), запросы через `openapi-fetch`.
+- Фронтенд: `frontend/` — Vite + React + TypeScript + shadcn/ui, состояние через TanStack Query.
+
+## Окружение
+
+- Все версии инструментов зафиксированы в `mise.toml`; зависимости ставит `mise install`.
+- Единая команда проверок: `mise run check` (сборка + линтеры + типы + тесты). Она же вызывается из CI.
+- Фоновые серверы (бекенд, Vite) описаны как демоны mise (`[daemons]` в mise.toml):
+  `mise daemons start backend frontend`, `mise daemons logs backend`, `mise daemons stop ...`.
+- Гит-хуки настроены через hk (`hk.pkl`), включая проверку commit-msg.
+
+## Conventional Commits (обязательно)
+
+Текст каждого коммита начинается с префикса: `feat:` — новая функция,
+`fix:` — исправление бага; остальные типы (`chore:`, `docs:`, `refactor:`, `test:`)
+используются по смыслу. Проверка выполняется хуком commit-msg (hk), сборки должны
+соответствовать этому формату.
+
+## Уточнение при неоднозначности
+
+Если формулировка задачи вызывает какие-либо вопросы, или если в ходе работы
+возникают странные, неожиданные или неоднозначные детали — приостановите
+выполнение до того, как предпринять действие, и запросите у пользователя
+уточнение.
+
+Где это уместно, представьте возможные варианты ответов в виде явного списка
+опций на выбор.

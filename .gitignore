@@ -1,0 +1,20 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Node / pnpm
+node_modules/
+dist/
+.pnpm-store/
+
+# Environment & IDE
+.env
+.vs/
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@oxlint/node_modules/@oxc-project/runtime/target.json",
+  "ignorePatterns": ["dist", "node_modules"],
+  "overrides": [
+    {
+      "files": ["src/components/ui/*.tsx"],
+      "rules": {
+        "react/only-export-components": "off"
+      }
+    }
+  ]
+}

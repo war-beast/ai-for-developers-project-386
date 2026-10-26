@@ -1,0 +1,91 @@
+# Полное окружение проекта CallCalendar: инструменты, задачи, демоны, переменные.
+# Описание проверок из репозитория https://github.com/mokevnin/dev-quality-gates
+
+[settings]
+experimental = true
+
+[tools]
+dotnet = "10.0.402"
+node = "24.21.0"
+pnpm = "12.5.1"
+hk = "2.8.1"
+pitchfork = "2.32.2"
+typos = "1.51.1"
+jactionlint = "2.3.0"
+
+[env]
+SMOKE_URL = "http://127.0.0.1:5150"
+
+# ---------------------------------------------------------------- задачи
+
+[tasks.install]
+description = "Установка зависимостей всех пакетов"
+run = [
+  "dotnet restore",
+  "pnpm --dir frontend install",
+  "pnpm --dir api install",
+]
+
+[tasks.build]
+description = "Сборка бекенда и фронтенда"
+depends = ["install"]
+run = [
+  "dotnet build",
+  "pnpm --dir frontend build",
+]
+
+[tasks.lint]
+description = "Линтеры и проверка типов"
+depends = ["install"]
+run = [
+  "dotnet format --verify-no-changes",
+  "pnpm --dir frontend typecheck",
+  "pnpm --dir frontend lint",
+  "typos",
+  "jactionlint .github/workflows/check.yml",
+]
+
+[tasks.openapi]
+description = "Генерация openapi.yaml из контракта TypeSpec"
+run = "pnpm --dir api run tsp"
+
+[tasks.sdk]
+description = "Генерация клиентского SDK из openapi.yaml"
+depends = ["openapi"]
+run = "pnpm --dir frontend run sdk"
+
+[tasks.test]
+description = "Юнит- и дымовые тесты (бекенд и фронтенд)"
+depends = ["build"]
+run = [
+  "dotnet test",
+  "mise run smoke-backend",
+]
+
+# Список "flat" и последовательный: dotnet format и dotnet test трогают одну
+# папку bin, поэтому check нельзя собирать из параллельных depends.
+[tasks.check]
+description = "Единая команда проверок: линтер + типы + дымовой тест (вызывается из CI)"
+run = [
+  "dotnet restore",
+  "pnpm --dir frontend install",
+  "pnpm --dir api install",
+  "dotnet build",
+  "dotnet format --verify-no-changes",
+  "pnpm --dir frontend typecheck",
+  "pnpm --dir frontend lint",
+  "typos",
+  "jactionlint .github/workflows/check.yml",
+  "dotnet test",
+  "mise run smoke-backend",
+]
+
+# ---------------------------------------------------------------- демоны
+
+[daemons.backend]
+run = "dotnet run --project src/CallCalendar --urls http://127.0.0.1:5150"
+ready_cmd = "curl -fsS http://127.0.0.1:5150/api/calendar/slots"
+
+[daemons.frontend]
+run = "pnpm --dir frontend dev"
+ready_cmd = "curl -fsS http://127.0.0.1:5173/"

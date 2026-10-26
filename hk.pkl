@@ -1,0 +1,45 @@
+amends "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.pkl"
+
+// Быстрые шаги: на pre-commit и в `mise run check` (CI гоняет тот же список).
+local fast = new Mapping<String, Step> {
+  ["typos"] = Builtins.typos
+  ["jactionlint"] = Builtins.jactionlint
+  ["dotnet-format"] {
+    glob = List("**/*.cs")
+    check = "dotnet format --verify-no-changes"
+    // dotnet format правит файлы сам; отдельного fixer не нужно
+    fix = "dotnet format"
+  }
+  ["tsc"] {
+    glob = List("frontend/src/**/*.{ts,tsx}")
+    check = "pnpm --dir frontend typecheck"
+  }
+  ["oxlint"] {
+    glob = List("frontend/src/**/*.{ts,tsx}")
+    check = "pnpm --dir frontend lint"
+  }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps = fast
+  }
+  ["pre-push"] {
+    steps = fast
+  }
+  ["check"] {
+    steps = fast
+  }
+  ["fix"] {
+    fix = true
+    steps = fast
+  }
+  ["commit-msg"] {
+    steps {
+      ["conventional-commit"] = Builtins.check_conventional_commit
+    }
+  }
+}

@@ -1,0 +1,23 @@
+schema: spec-driven
+
+context: |
+  Проект: солюшен ASP.NET Core MVC CallCalendar (формат солюшена .slnx), .NET 10 (net10.0).
+  Архитектура, 3 слоя:
+    - src/CallCalendar — слой представления (ASP.NET Core MVC), там же REST-контроллеры api/
+    - src/CallCalendar.BLL — бизнес-логика: папки Model/, Interface/, Service/ (с плейсхолдером .gitkeep)
+    - src/CallCalendar.DAL — доступ к данным: папки Enums/, Entity/, Interface/, Repository/ (с плейсхолдером .gitkeep)
+  Зависимости строго односторонние: CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL.
+  Тесты: src/CallCalendar.Tests (xUnit.v3 + Moq), ссылается только на BLL; тесты обязательны для новой логики BLL.
+  Фронтенд: frontend/ — Vite + React + TypeScript + shadcn/ui + TanStack Query.
+  Контракт API: api/main.tsp (TypeSpec); openapi.yaml эмитится командой `mise run openapi`,
+  SDK для фронтенда генерируется `mise run sdk` в frontend/src/api/schema.d.ts (openapi-typescript).
+  Окружение и проверки: mise (mise.toml); единая команда проверок — `mise run check`.
+  Коммиты: Conventional Commits (feat:/fix:), проверяются хуком commit-msg (hk).
+  Политика: при неоднозначности останавливаемся и уточняем у пользователя.
+  Подробная структура и правила проекта — в AGENTS.md в корне репозитория.
+
+rules:
+  specs:
+    - Требования описывать в формате Given/When/Then
+  tasks:
+    - Разбивать работу на небольшие шаги с проверяемым результатом

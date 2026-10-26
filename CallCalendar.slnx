@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CallCalendar.BLL/CallCalendar.BLL.csproj" />
+    <Project Path="src/CallCalendar.DAL/CallCalendar.DAL.csproj" />
+    <Project Path="src/CallCalendar.Tests/CallCalendar.Tests.csproj" />
+    <Project Path="src/CallCalendar/CallCalendar.csproj" />
+  </Folder>
+</Solution>
