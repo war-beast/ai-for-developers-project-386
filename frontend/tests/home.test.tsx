@@ -24,11 +24,13 @@ test('главная рассказывает про сервис', () => {
   expect(screen.getByText(/ближайшие\s+14 дней/)).toBeTruthy()
 })
 
-test('главная ведёт на страницу записи', () => {
+test('панель навигации ведёт на главную и на страницу записи', () => {
   renderAt('/')
 
-  const link = screen.getByRole('link', { name: 'Записаться на звонок' })
-  expect(link.getAttribute('href')).toBe('/book')
+  expect(screen.getByRole('link', { name: 'Календарь' }).getAttribute('href')).toBe('/')
+  expect(
+    screen.getByRole('link', { name: 'Записаться на звонок' }).getAttribute('href'),
+  ).toBe('/book')
 })
 
 test('страница записи — заглушка со ссылкой на главную', () => {
@@ -38,4 +40,8 @@ test('страница записи — заглушка со ссылкой н�
     'Запись на звонок',
   )
   expect(screen.getByRole('link', { name: 'На главную' }).getAttribute('href')).toBe('/')
+  // Панель навигации есть и здесь.
+  expect(
+    screen.getByRole('link', { name: 'Записаться на звонок' }).getAttribute('href'),
+  ).toBe('/book')
 })
