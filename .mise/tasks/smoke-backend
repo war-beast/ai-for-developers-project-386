@@ -5,7 +5,7 @@ set -euo pipefail
 PORT=5150
 URL="http://127.0.0.1:${PORT}"
 
-dotnet run --project src/CallCalendar --no-build --urls "${URL}" &
+dotnet run --project backend/CallCalendar --no-build --urls "${URL}" &
 PID=$!
 trap 'kill "${PID}" 2>/dev/null || true' EXIT
 

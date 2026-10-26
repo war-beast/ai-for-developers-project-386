@@ -3,9 +3,9 @@ schema: spec-driven
 context: |
   Проект: солюшен ASP.NET Core MVC CallCalendar (формат солюшена .slnx), .NET 10 (net10.0).
   Архитектура, 3 слоя:
-    - src/CallCalendar — слой представления (ASP.NET Core MVC), там же REST-контроллеры api/
-    - src/CallCalendar.BLL — бизнес-логика: папки Model/, Interface/, Service/ (с плейсхолдером .gitkeep)
-    - src/CallCalendar.DAL — доступ к данным: папки Enums/, Entity/, Interface/, Repository/ (с плейсхолдером .gitkeep)
+    - backend/CallCalendar — слой представления (ASP.NET Core MVC), там же REST-контроллеры api/
+    - backend/CallCalendar.BLL — бизнес-логика: папки Model/, Interface/, Service/ (с плейсхолдером .gitkeep)
+    - backend/CallCalendar.DAL — доступ к данным: папки Enums/, Entity/, Interface/, Repository/ (с плейсхолдером .gitkeep)
   Зависимости строго односторонние: CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL.
   Тесты: src/CallCalendar.Tests (xUnit.v3 + Moq), ссылается только на BLL; тесты обязательны для новой логики BLL.
   Фронтенд: frontend/ — Vite + React + TypeScript + shadcn/ui + TanStack Query.

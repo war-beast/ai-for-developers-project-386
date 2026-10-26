@@ -2,10 +2,10 @@
 
 ## Структура солюшена
 
-- `src/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
-- `src/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
-- `src/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
-- `src/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
+- `backend/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
+- `backend/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
+- `backend/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
+- `backend/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
 
 Структурные папки BLL и DAL нельзя удалять; каждая из них содержит файл-плейсхолдер
 `.gitkeep`, чтобы отображаться в Solution Explorer. Новые классы кладутся в

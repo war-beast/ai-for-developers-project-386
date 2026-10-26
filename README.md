@@ -11,7 +11,7 @@
 
 ## Стек
 
-- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `src/CallCalendar` (представление, там же REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
+- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (представление, там же REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
 - Контракт API: TypeSpec (`api/main.tsp`) → OpenAPI (`api/openapi.yaml`) → клиентский SDK для TypeScript (`frontend/src/api/schema.d.ts`, генератор openapi-typescript, запросы через openapi-fetch)
 - Фронтенд: Vite + React + TypeScript, shadcn/ui, TanStack Query
 - Инструменты: mise (версии в `mise.toml`), git-хуки через hk (`hk.pkl`), демоны через pitchfork
