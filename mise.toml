@@ -83,7 +83,7 @@ run = [
 # ---------------------------------------------------------------- демоны
 
 [daemons.backend]
-run = "dotnet run --project src/CallCalendar --urls http://127.0.0.1:5150"
+run = "dotnet run --project backend/CallCalendar --urls http://127.0.0.1:5150"
 ready_cmd = "curl -fsS http://127.0.0.1:5150/api/calendar/slots"
 
 [daemons.frontend]

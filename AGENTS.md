@@ -2,10 +2,10 @@
 
 ## Структура солюшена
 
-- `src/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
-- `src/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
-- `src/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
-- `src/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
+- `backend/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
+- `backend/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
+- `backend/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
+- `backend/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
 
 Структурные папки BLL и DAL нельзя удалять; каждая из них содержит файл-плейсхолдер
 `.gitkeep`, чтобы отображаться в Solution Explorer. Новые классы кладутся в
@@ -36,6 +36,14 @@
 `fix:` — исправление бага; остальные типы (`chore:`, `docs:`, `refactor:`, `test:`)
 используются по смыслу. Проверка выполняется хуком commit-msg (hk), сборки должны
 соответствовать этому формату.
+
+## Ветки и PR
+
+- Каждую новую задачу начинаем в новой ветке: `feat/<краткое-имя>` (git не
+  допускает `:` в именах веток, поэтому префикс `feat:` пишется как `feat/`).
+- Ветки `feat/` создаются только из `dev`.
+- После завершения задачи — коммитим изменения (Conventional Commits) и делаем
+  PR в ветку `dev` на GitHub.
 
 ## Уточнение при неоднозначности
 
