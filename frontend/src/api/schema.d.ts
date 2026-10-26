@@ -3,37 +3,10 @@
  * Do not make direct changes to the file.
  */
 
-export interface paths {
-    "/api/calendar/slots": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Список слотов календаря. */
-        get: operations["Calendar_listSlots"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-}
+export type paths = Record<string, never>;
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** @description Слот звонка в расписании. */
-        CallSlot: {
-            /** Format: int32 */
-            id: number;
-            title: string;
-            /** Format: date-time */
-            startsAt: string;
-        };
-    };
+    schemas: never;
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -41,25 +14,4 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export interface operations {
-    Calendar_listSlots: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The request has succeeded. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CallSlot"][];
-                };
-            };
-        };
-    };
-}
+export type operations = Record<string, never>;

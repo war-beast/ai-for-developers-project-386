@@ -13,9 +13,6 @@ pitchfork = "2.32.2"
 typos = "1.51.1"
 jactionlint = "2.3.0"
 
-[env]
-SMOKE_URL = "http://127.0.0.1:5150"
-
 # ---------------------------------------------------------------- задачи
 
 [tasks.install]
@@ -59,6 +56,7 @@ description = "Юнит- и дымовые тесты (бекенд и фрон�
 depends = ["build"]
 run = [
   "dotnet test",
+  "pnpm --dir frontend test",
   "mise run smoke-backend",
 ]
 
@@ -77,6 +75,7 @@ run = [
   "typos",
   "jactionlint .github/workflows/check.yml",
   "dotnet test",
+  "pnpm --dir frontend test",
   "mise run smoke-backend",
 ]
 
@@ -84,7 +83,7 @@ run = [
 
 [daemons.backend]
 run = "dotnet run --project backend/CallCalendar --urls http://127.0.0.1:5150"
-ready_cmd = "curl -fsS http://127.0.0.1:5150/api/calendar/slots"
+ready_cmd = "curl -fsS http://127.0.0.1:5150/health"
 
 [daemons.frontend]
 run = "pnpm --dir frontend dev --host 127.0.0.1"

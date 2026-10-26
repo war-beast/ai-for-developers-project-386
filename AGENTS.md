@@ -2,7 +2,7 @@
 
 ## Структура солюшена
 
-- `backend/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): MVC-страницы и REST-контроллеры `api/`
+- `backend/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): REST-контроллеры `api/` — это слой View бекенда; пользовательский интерфейс — React SPA в `frontend/`
 - `backend/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
 - `backend/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
 - `backend/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
@@ -12,7 +12,7 @@
 соответствующую папку по смыслу.
 
 Зависимости строго односторонние: `CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL`.
-`CallCalendar.Tests` ссылается только на BLL.
+`CallCalendar.Tests` ссылается на BLL, а для интеграционных тестов API — на `CallCalendar`.
 
 ## Контракт API и фронтенд
 
