@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Дымовой прогон: поднимает бекенд, ждёт готовности, гоняет тесты фронтенда, гасит бекенд.
+# Дымовой прогон: бекенд поднимается и отвечает на /health, затем гасим его.
 set -euo pipefail
 
 PORT=5150
@@ -11,7 +11,7 @@ trap 'kill "${PID}" 2>/dev/null || true' EXIT
 
 ready=0
 for i in $(seq 1 60); do
-  if curl -fsS "${URL}/api/calendar/slots" > /dev/null 2>&1; then
+  if curl -fsS "${URL}/health" > /dev/null 2>&1; then
     ready=1
     break
   fi
@@ -22,5 +22,3 @@ if [ "${ready}" != "1" ]; then
   echo "backend did not become ready on ${URL}" >&2
   exit 1
 fi
-
-SMOKE_URL="${URL}" pnpm --dir frontend test

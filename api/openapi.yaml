@@ -1,42 +1,8 @@
 openapi: 3.0.0
 info:
   title: Call Calendar API
+  description: API сервиса записи на звонок. Эндпоинты появятся на шаге бронирования.
   version: 0.0.0
-tags:
-  - name: Calendar
-paths:
-  /api/calendar/slots:
-    get:
-      operationId: Calendar_listSlots
-      description: Список слотов календаря.
-      parameters: []
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CallSlot'
-      tags:
-        - Calendar
-components:
-  schemas:
-    CallSlot:
-      type: object
-      required:
-        - id
-        - title
-        - startsAt
-      properties:
-        id:
-          type: integer
-          format: int32
-          minimum: 1
-        title:
-          type: string
-        startsAt:
-          type: string
-          format: date-time
-      description: Слот звонка в расписании.
+tags: []
+paths: {}
+components: {}
