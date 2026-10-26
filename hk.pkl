@@ -3,7 +3,10 @@ import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.
 
 // Быстрые шаги: на pre-commit и в `mise run check` (CI гоняет тот же список).
 local fast = new Mapping<String, Step> {
-  ["typos"] = Builtins.typos
+  // typos builtin написан как POSIX-скрипт — на Windows нужен sh из Git for Windows
+  ["typos"] = (Builtins.typos) {
+    shell = "sh -o errexit -c"
+  }
   ["jactionlint"] = Builtins.jactionlint
   ["dotnet-format"] {
     glob = List("**/*.cs")
