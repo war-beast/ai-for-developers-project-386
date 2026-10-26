@@ -4,17 +4,24 @@
 [![hexlet-check](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/war-beast/ai-for-developers-project-386/actions)
 [![check](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/check.yml/badge.svg)](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/check.yml)
 
-Разработайте совместно с ИИ сервис для бронирования календаря
+Сервис записи на звонок: владелец публикует доступное время, а гость без
+регистрации выбирает тип встречи и свободный слот в ближайшие 14 дней.
 
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
 ## Стек
 
-- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (представление, там же REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
+- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (слой представления, REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
+- Фронтенд: `frontend/` — Vite + React + TypeScript, shadcn/ui, TanStack Query, react-router. Это единственный пользовательский интерфейс приложения
 - Контракт API: TypeSpec (`api/main.tsp`) → OpenAPI (`api/openapi.yaml`) → клиентский SDK для TypeScript (`frontend/src/api/schema.d.ts`, генератор openapi-typescript, запросы через openapi-fetch)
-- Фронтенд: Vite + React + TypeScript, shadcn/ui, TanStack Query
 - Инструменты: mise (версии в `mise.toml`), git-хуки через hk (`hk.pkl`), демоны через pitchfork
+
+## Что уже работает
+
+- Главная страница `/` — рассказывает про сервис и ведёт на страницу записи
+- Страница записи `/book` — пока заглушка: выбор типов встреч и слотов появится на следующем шаге
+- `GET /health` — проверка живости бекенда
 
 ## Установка
 
@@ -29,7 +36,7 @@ mise run install  # зависимости dotnet/node (frontend, api)
 
 ## Использование
 
-Запуск через демоны (бекенд на :5150, фронтенд на :5173):
+Запуск через демоны (UI на :5173, API на :5150):
 
 ```bash
 mise daemons start backend frontend
@@ -44,11 +51,17 @@ mise run openapi   # TypeSpec -> openapi.yaml
 mise run sdk       # openapi.yaml -> frontend/src/api/schema.d.ts
 ```
 
-Полный прогон проверок (его же делает CI): сборка, линтеры, типы, тесты:
+Полный прогон проверок (его же делает CI): сборка, линтеры, типы, тесты
+бекенда и фронтенда, дымовая проверка API:
 
 ```bash
 mise run check
 ```
+
+## Документация
+
+- `GLOSSARY.md` — словарь предметной области
+- `docs/adr/` — принятые архитектурные решения
 
 ---
 
