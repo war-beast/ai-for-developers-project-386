@@ -53,7 +53,8 @@ public class EventTypesApiTests
 
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken));
-        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code")
+            .GetString());
 
         var errors = problem.RootElement.GetProperty("errors");
         Assert.True(errors.TryGetProperty("id", out _));
@@ -83,6 +84,7 @@ public class EventTypesApiTests
 
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken));
-        Assert.Equal("event_type_exists", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("event_type_exists", problem.RootElement.GetProperty("code")
+            .GetString());
     }
 }

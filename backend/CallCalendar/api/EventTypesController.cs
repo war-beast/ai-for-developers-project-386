@@ -28,10 +28,12 @@ public sealed class EventTypesController(
 
         if (result.SlugTaken)
         {
-            return problemFactory.Create(ProblemCodes.EventTypeExists).GetProblemResult(command.Id);
+            return problemFactory.Create(ProblemCodes.EventTypeExists)
+                .GetProblemResult(command.Id);
         }
 
-        return problemFactory.Create(ProblemCodes.ValidationFailed).GetProblemResult(errors: result.Errors);
+        return problemFactory.Create(ProblemCodes.ValidationFailed)
+            .GetProblemResult(errors: result.Errors);
     }
 
     /// <summary>Свободные слоты типа встречи на всё окно записи.</summary>
@@ -42,6 +44,7 @@ public sealed class EventTypesController(
 
         return result.Window is not null
             ? Ok(result.Window)
-            : problemFactory.Create(ProblemCodes.EventTypeNotFound).GetProblemResult(eventTypeId);
+            : problemFactory.Create(ProblemCodes.EventTypeNotFound)
+                .GetProblemResult(eventTypeId);
     }
 }

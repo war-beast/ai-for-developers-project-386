@@ -50,12 +50,13 @@ public class BookingServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var result = CreateService().Create(new CreateBookingCommand(
-            "intro-call",
-            At(28, 10, 0),
-            "Гость",
-            "не-email",
-            new string('К', 501)));
+        var result = CreateService()
+            .Create(new CreateBookingCommand(
+                "intro-call",
+                At(28, 10, 0),
+                "Гость",
+                "не-email",
+                new string('К', 501)));
 
         Assert.Null(result.Created);
         Assert.False(result.Errors.ContainsKey("guestName"));
@@ -69,12 +70,13 @@ public class BookingServiceTests
         AddEventType("intro-call", 30);
         var name = new string('Г', 200);
 
-        var result = CreateService().Create(new CreateBookingCommand(
-            "intro-call",
-            At(28, 10, 0),
-            $"  {name}  ",
-            "guest@example.com",
-            null));
+        var result = CreateService()
+            .Create(new CreateBookingCommand(
+                "intro-call",
+                At(28, 10, 0),
+                $"  {name}  ",
+                "guest@example.com",
+                null));
 
         var booking = Assert.IsType<Booking>(result.Created);
         Assert.Equal(name, booking.GuestName);
@@ -85,12 +87,13 @@ public class BookingServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var result = CreateService().Create(new CreateBookingCommand(
-            "intro-call",
-            At(28, 10, 0),
-            "   ",
-            "",
-            null));
+        var result = CreateService()
+            .Create(new CreateBookingCommand(
+                "intro-call",
+                At(28, 10, 0),
+                "   ",
+                "",
+                null));
 
         Assert.Null(result.Created);
         Assert.True(result.Errors.ContainsKey("guestName"));
@@ -106,12 +109,13 @@ public class BookingServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var result = CreateService().Create(new CreateBookingCommand(
-            "intro-call",
-            new DateTimeOffset(2026, month, day, hour, minute, 0, MoscowOffset),
-            "Гость",
-            "guest@example.com",
-            null));
+        var result = CreateService()
+            .Create(new CreateBookingCommand(
+                "intro-call",
+                new DateTimeOffset(2026, month, day, hour, minute, 0, MoscowOffset),
+                "Гость",
+                "guest@example.com",
+                null));
 
         Assert.Null(result.Created);
         Assert.True(result.SlotNotAvailable);
@@ -132,12 +136,13 @@ public class BookingServiceTests
     {
         AddEventType("intro-call", 30, "Знакомство");
 
-        var result = CreateService().Create(new CreateBookingCommand(
-            "intro-call",
-            At(28, 10, 0),
-            "  Гость  ",
-            "  guest@example.com  ",
-            "   "));
+        var result = CreateService()
+            .Create(new CreateBookingCommand(
+                "intro-call",
+                At(28, 10, 0),
+                "  Гость  ",
+                "  guest@example.com  ",
+                "   "));
 
         var booking = Assert.IsType<Booking>(result.Created);
         Assert.NotEqual(Guid.Empty, booking.Id);
@@ -158,7 +163,8 @@ public class BookingServiceTests
         AddBooking("intro-call", At(27, 11, 0), At(27, 11, 30));
         AddBooking("intro-call", At(27, 12, 45), At(27, 13, 15));
 
-        var upcoming = CreateService().GetUpcoming();
+        var upcoming = CreateService()
+            .GetUpcoming();
 
         var booking = Assert.Single(upcoming);
         Assert.Equal(At(27, 12, 45), booking.Start);
@@ -172,7 +178,8 @@ public class BookingServiceTests
         AddBooking("intro-call", At(28, 9, 0), At(28, 9, 30));
         AddBooking("intro-call", At(27, 12, 45), At(27, 13, 15));
 
-        var upcoming = CreateService().GetUpcoming();
+        var upcoming = CreateService()
+            .GetUpcoming();
 
         Assert.Equal(
             [At(27, 12, 45), At(28, 9, 0), At(28, 12, 0)],
@@ -185,7 +192,8 @@ public class BookingServiceTests
         AddEventType("intro-call", 30, "Знакомство");
         AddBooking("intro-call", At(28, 10, 0), At(28, 10, 30));
 
-        var booking = Assert.Single(CreateService().GetUpcoming());
+        var booking = Assert.Single(CreateService()
+            .GetUpcoming());
 
         Assert.Equal("intro-call", booking.EventTypeId);
         Assert.Equal("Знакомство", booking.EventTypeTitle);
@@ -237,12 +245,13 @@ public class BookingServiceTests
         });
 
     private CreateBookingResult Create(string eventTypeId, DateTimeOffset start) =>
-        CreateService().Create(new CreateBookingCommand(
-            eventTypeId,
-            start,
-            "Гость",
-            "guest@example.com",
-            null));
+        CreateService()
+            .Create(new CreateBookingCommand(
+                eventTypeId,
+                start,
+                "Гость",
+                "guest@example.com",
+                null));
 
     private static DateTimeOffset At(int day, int hour, int minute) =>
         new(2026, 10, day, hour, minute, 0, MoscowOffset);

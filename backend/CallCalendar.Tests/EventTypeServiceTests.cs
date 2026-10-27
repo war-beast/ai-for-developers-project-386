@@ -76,6 +76,7 @@ public class EventTypeServiceTests
         _service.Create(new CreateEventTypeCommand("first", "Первый", "", 30));
         _service.Create(new CreateEventTypeCommand("second", "Второй", "", 45));
 
-        Assert.Equal(["first", "second"], _service.GetAll().Select(eventType => eventType.Id));
+        Assert.Equal(["first", "second"], _service.GetAll()
+            .Select(eventType => eventType.Id));
     }
 }

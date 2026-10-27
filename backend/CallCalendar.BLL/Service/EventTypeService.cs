@@ -19,7 +19,9 @@ public sealed class EventTypeService(IEventTypeRepository repository) : IEventTy
         new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
 
     public IReadOnlyList<EventType> GetAll() =>
-        repository.GetAll().Select(ToModel).ToList();
+        repository.GetAll()
+            .Select(ToModel)
+            .ToList();
 
     public CreateEventTypeResult Create(CreateEventTypeCommand command)
     {

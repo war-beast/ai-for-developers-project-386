@@ -117,7 +117,8 @@ public class BookingsApiTests
 
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken));
-        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code")
+            .GetString());
         var errors = problem.RootElement.GetProperty("errors");
         Assert.True(errors.TryGetProperty("guestName", out _));
         Assert.True(errors.TryGetProperty("guestEmail", out _));
@@ -132,11 +133,12 @@ public class BookingsApiTests
         await CreateEventType(client, "intro-call", "Знакомство", 30);
         var start = await FirstFreeSlot(client, "intro-call");
 
-        var responses = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ =>
-            client.PostAsJsonAsync(
-                "/api/bookings",
-                new CreateBookingCommand("intro-call", start, "Гость", "guest@example.com", null),
-                TestContext.Current.CancellationToken)));
+        var responses = await Task.WhenAll(Enumerable.Range(0, 10)
+            .Select(_ =>
+                client.PostAsJsonAsync(
+                    "/api/bookings",
+                    new CreateBookingCommand("intro-call", start, "Гость", "guest@example.com", null),
+                    TestContext.Current.CancellationToken)));
 
         Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Created);
         Assert.Equal(9, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
@@ -224,7 +226,9 @@ public class BookingsApiTests
         var window = await client.GetFromJsonAsync<SlotWindow>(
             $"/api/event-types/{eventTypeId}/slots",
             TestContext.Current.CancellationToken);
-        return window!.Days.SelectMany(day => day.Slots).Select(slot => slot.Start).ToList();
+        return window!.Days.SelectMany(day => day.Slots)
+            .Select(slot => slot.Start)
+            .ToList();
     }
 
     private static async Task Book(HttpClient client, string eventTypeId, DateTimeOffset start)
@@ -240,6 +244,7 @@ public class BookingsApiTests
     {
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken));
-        return problem.RootElement.GetProperty("code").GetString();
+        return problem.RootElement.GetProperty("code")
+            .GetString();
     }
 }

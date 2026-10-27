@@ -28,19 +28,23 @@ public sealed class BookingsController(
 
         if (result.EventTypeNotFound)
         {
-            return problemFactory.Create(ProblemCodes.EventTypeNotFound).GetProblemResult(command.EventTypeId);
+            return problemFactory.Create(ProblemCodes.EventTypeNotFound)
+                .GetProblemResult(command.EventTypeId);
         }
 
         if (result.SlotTaken)
         {
-            return problemFactory.Create(ProblemCodes.SlotTaken).GetProblemResult();
+            return problemFactory.Create(ProblemCodes.SlotTaken)
+                .GetProblemResult();
         }
 
         if (result.SlotNotAvailable)
         {
-            return problemFactory.Create(ProblemCodes.SlotNotAvailable).GetProblemResult();
+            return problemFactory.Create(ProblemCodes.SlotNotAvailable)
+                .GetProblemResult();
         }
 
-        return problemFactory.Create(ProblemCodes.ValidationFailed).GetProblemResult(errors: result.Errors);
+        return problemFactory.Create(ProblemCodes.ValidationFailed)
+            .GetProblemResult(errors: result.Errors);
     }
 }

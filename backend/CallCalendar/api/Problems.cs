@@ -56,7 +56,9 @@ internal static class Problems
     /// <summary>«$.guestEmail» → «guestEmail»: ключи errors совпадают с полями формы.</summary>
     private static string FieldName(string key)
     {
-        var name = key.TrimStart('$', '.').Split('.').Last();
+        var name = key.TrimStart('$', '.')
+            .Split('.')
+            .Last();
 
         return name.Length == 0 ? "body" : char.ToLowerInvariant(name[0]) + name[1..];
     }

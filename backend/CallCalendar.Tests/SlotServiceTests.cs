@@ -20,7 +20,8 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var result = CreateService().GetWindow("intro-call");
+        var result = CreateService()
+            .GetWindow("intro-call");
 
         var window = Assert.IsType<SlotWindow>(result.Window);
         Assert.Equal("Europe/Moscow", window.TimeZone);
@@ -29,7 +30,8 @@ public class SlotServiceTests
         Assert.Equal(30, window.StepMinutes);
         Assert.Equal(14, window.Days.Count);
         Assert.Equal(
-            Enumerable.Range(1, 14).Select(day => new DateOnly(2026, 10, 27).AddDays(day)),
+            Enumerable.Range(1, 14)
+                .Select(day => new DateOnly(2026, 10, 27).AddDays(day)),
             window.Days.Select(day => day.Date));
     }
 
@@ -38,7 +40,8 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var window = CreateService().GetWindow("intro-call").Window!;
+        var window = CreateService()
+            .GetWindow("intro-call").Window!;
 
         Assert.Empty(window.Days.Single(day => day.Date == new DateOnly(2026, 10, 31)).Slots);
         Assert.Empty(window.Days.Single(day => day.Date == new DateOnly(2026, 11, 1)).Slots);
@@ -54,7 +57,8 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", durationMinutes);
 
-        var slots = CreateService().GetWindow("intro-call").Window!.Days[0].Slots;
+        var slots = CreateService()
+            .GetWindow("intro-call").Window!.Days[0].Slots;
 
         Assert.Equal(
             new DateTimeOffset(2026, 10, 28, 9, 0, 0, MoscowOffset),
@@ -74,7 +78,8 @@ public class SlotServiceTests
     {
         AddEventType("too-long", 600);
 
-        var window = CreateService().GetWindow("too-long").Window;
+        var window = CreateService()
+            .GetWindow("too-long").Window;
 
         Assert.NotNull(window);
         Assert.Equal(14, window.Days.Count);
@@ -96,7 +101,8 @@ public class SlotServiceTests
             CreatedAt = Now,
         });
 
-        var slots = CreateService().GetWindow("intro-call").Window!.Days[0].Slots;
+        var slots = CreateService()
+            .GetWindow("intro-call").Window!.Days[0].Slots;
 
         Assert.DoesNotContain(slots, slot => slot.Start == new DateTimeOffset(2026, 10, 28, 10, 0, 0, MoscowOffset));
         Assert.Contains(slots, slot => slot.Start == new DateTimeOffset(2026, 10, 28, 9, 30, 0, MoscowOffset));
@@ -106,7 +112,8 @@ public class SlotServiceTests
     [Fact]
     public void UnknownEventTypeIsReportedAsNotFound()
     {
-        var result = CreateService().GetWindow("missing");
+        var result = CreateService()
+            .GetWindow("missing");
 
         Assert.Null(result.Window);
         Assert.True(result.EventTypeNotFound);
