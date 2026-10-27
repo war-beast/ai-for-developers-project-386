@@ -1,7 +1,9 @@
 using CallCalendar.BLL.Model;
 using CallCalendar.BLL.Service;
 using CallCalendar.DAL.Entity;
+using CallCalendar.DAL.Interface;
 using CallCalendar.DAL.Repository;
+using Moq;
 
 namespace CallCalendar.Tests;
 
@@ -50,14 +52,31 @@ public class BookingServiceTests
         var result = CreateService().Create(new CreateBookingCommand(
             "intro-call",
             At(28, 10, 0),
-            new string('Г', 101),
+            "Гость",
             "не-email",
             new string('К', 501)));
 
         Assert.Null(result.Created);
-        Assert.True(result.Errors.ContainsKey("guestName"));
+        Assert.False(result.Errors.ContainsKey("guestName"));
         Assert.True(result.Errors.ContainsKey("guestEmail"));
         Assert.True(result.Errors.ContainsKey("comment"));
+    }
+
+    [Fact]
+    public void LongGuestNameIsAccepted()
+    {
+        AddEventType("intro-call", 30);
+        var name = new string('Г', 200);
+
+        var result = CreateService().Create(new CreateBookingCommand(
+            "intro-call",
+            At(28, 10, 0),
+            $"  {name}  ",
+            "guest@example.com",
+            null));
+
+        var booking = Assert.IsType<Booking>(result.Created);
+        Assert.Equal(name, booking.GuestName);
     }
 
     [Fact]
@@ -173,6 +192,34 @@ public class BookingServiceTests
         Assert.Equal("guest@example.com", booking.GuestEmail);
         Assert.Equal("Перезвоните", booking.Comment);
         Assert.Equal(At(28, 10, 30), booking.End);
+    }
+
+    [Fact]
+    public void UpcomingLoadsEventTypesOnceInsteadOfPerBooking()
+    {
+        // Строгий мок: GetById на каждую запись — это N+1, обращение упадёт.
+        var eventTypes = new Mock<IEventTypeRepository>(MockBehavior.Strict);
+        eventTypes
+            .Setup(repository => repository.GetAll())
+            .Returns([
+                new EventTypeEntity
+                {
+                    Id = "intro-call",
+                    Title = "Знакомство",
+                    Description = string.Empty,
+                    DurationMinutes = 30,
+                },
+            ]);
+        AddBooking("intro-call", At(28, 10, 0), At(28, 10, 30));
+        var service = new BookingService(
+            eventTypes.Object,
+            _bookings,
+            new OwnerOptions(),
+            new FixedTimeProvider(Now));
+
+        var booking = Assert.Single(service.GetUpcoming());
+
+        Assert.Equal("Знакомство", booking.EventTypeTitle);
     }
 
     private void AddBooking(string eventTypeId, DateTimeOffset start, DateTimeOffset end) =>
