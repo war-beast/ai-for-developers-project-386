@@ -1,8 +1,362 @@
 openapi: 3.0.0
 info:
   title: Call Calendar API
-  description: API сервиса записи на звонок. Эндпоинты появятся на шаге бронирования.
+  description: 'API записи на звонок: типы встреч, слоты и бронирования.'
   version: 0.0.0
-tags: []
-paths: {}
-components: {}
+tags:
+  - name: Event types
+  - name: Bookings
+paths:
+  /api/bookings:
+    get:
+      operationId: Bookings_list
+      description: Предстоящие записи владельца.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+      tags:
+        - Bookings
+    post:
+      operationId: Bookings_create
+      description: Забронировать слот.
+      parameters: []
+      responses:
+        '201':
+          description: 'Успешное создание: 201 и созданный ресурс.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/problem+json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationProblem'
+                  - $ref: '#/components/schemas/SlotNotAvailableProblem'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundProblem'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SlotTakenProblem'
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+  /api/event-types:
+    get:
+      operationId: EventTypes_list
+      description: Список типов встреч.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+      tags:
+        - Event types
+    post:
+      operationId: EventTypes_create
+      description: Создать тип встречи.
+      parameters: []
+      responses:
+        '201':
+          description: 'Успешное создание: 201 и созданный ресурс.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblem'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/EventTypeExistsProblem'
+      tags:
+        - Event types
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventTypeRequest'
+  /api/event-types/{eventTypeId}/slots:
+    get:
+      operationId: EventTypes_slots
+      description: Свободные слоты типа встречи на всё окно записи.
+      parameters:
+        - name: eventTypeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotWindow'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundProblem'
+      tags:
+        - Event types
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - eventTypeTitle
+        - start
+        - end
+        - guestName
+        - guestEmail
+        - createdAt
+      properties:
+        id:
+          type: string
+        eventTypeId:
+          type: string
+        eventTypeTitle:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      description: Созданная запись.
+    CreateBookingRequest:
+      type: object
+      required:
+        - eventTypeId
+        - start
+        - guestName
+        - guestEmail
+      properties:
+        eventTypeId:
+          type: string
+        start:
+          type: string
+          format: date-time
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        comment:
+          type: string
+    CreateEventTypeRequest:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - durationMinutes
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          format: int32
+    EventType:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - durationMinutes
+      properties:
+        id:
+          type: string
+          description: Slug, заданный владельцем.
+        title:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+          format: int32
+          description: Длительность в минутах, 15–240, кратно 15.
+      description: Тип встречи, который создаёт владелец.
+    EventTypeExistsProblem:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - event_type_exists
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+    EventTypeNotFoundProblem:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - event_type_not_found
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+    ProblemDetails:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - code
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        code:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      description: Тело ошибки в формате ProblemDetails.
+    Slot:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+      description: 'Свободный слот: начало и конец в поясе владельца.'
+    SlotDay:
+      type: object
+      required:
+        - date
+        - slots
+      properties:
+        date:
+          type: string
+          format: date
+          description: Календарная дата в поясе владельца.
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+    SlotNotAvailableProblem:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - slot_not_available
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+    SlotTakenProblem:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - slot_taken
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+    SlotWindow:
+      type: object
+      required:
+        - timeZone
+        - windowStart
+        - windowEnd
+        - stepMinutes
+        - days
+      properties:
+        timeZone:
+          type: string
+          description: IANA-пояс, в котором заданы рабочие часы.
+        windowStart:
+          type: string
+          format: date
+        windowEnd:
+          type: string
+          format: date
+        stepMinutes:
+          type: integer
+          format: int32
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotDay'
+      description: Окно записи на 14 дней со свободными слотами.
+    ValidationProblem:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - validation_failed
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
