@@ -1,5 +1,6 @@
 using CallCalendar.BLL.Interface;
 using CallCalendar.BLL.Model;
+using CallCalendar.DAL;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Interface;
 
@@ -44,7 +45,8 @@ public sealed class SlotService(
     {
         var slots = SlotGrid
             .Slots(date, durationMinutes, options, timeZone)
-            .Where(slot => !bookings.Any(booking => slot.Start < booking.End && booking.Start < slot.End))
+            .Where(slot => !bookings.Any(booking => BookingInterval.Overlaps(
+                slot.Start, slot.End, booking.Start, booking.End)))
             .ToList();
 
         return new SlotDay(date, slots);
