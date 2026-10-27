@@ -16,3 +16,14 @@ export async function createBooking(
 
   return data
 }
+
+/** Предстоящие записи всех типов по возрастанию начала. */
+export async function fetchBookings(): Promise<Booking[]> {
+  const { data, error } = await api.GET('/api/bookings')
+
+  if (error) {
+    throw error
+  }
+
+  return data
+}
