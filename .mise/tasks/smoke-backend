@@ -82,6 +82,12 @@ status=$(curl -sS -o /dev/null -w '%{http_code}' \
   --data "${booking}")
 [ "${status}" = "409" ] || fail "duplicate booking returned ${status}, expected 409"
 
+status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/bookings")
+[ "${status}" = "200" ] || fail "GET /api/bookings returned ${status}, expected 200"
+
+curl -fsS "${URL}/api/bookings" | grep -q "\"start\":\"${start}\"" \
+  || fail "created booking is missing from GET /api/bookings"
+
 status=$(curl -sS -o /dev/null -w '%{http_code}' \
   -X POST "${URL}/api/bookings" \
   -H 'Content-Type: application/json' \

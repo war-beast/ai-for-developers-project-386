@@ -131,6 +131,63 @@ public class BookingServiceTests
         Assert.Equal(Now, booking.CreatedAt);
     }
 
+    [Fact]
+    public void UpcomingSkipsFinishedMeetingsAndKeepsOngoingOne()
+    {
+        AddEventType("intro-call", 30, "Знакомство");
+        AddBooking("intro-call", At(27, 11, 0), At(27, 11, 30));
+        AddBooking("intro-call", At(27, 12, 45), At(27, 13, 15));
+
+        var upcoming = CreateService().GetUpcoming();
+
+        var booking = Assert.Single(upcoming);
+        Assert.Equal(At(27, 12, 45), booking.Start);
+    }
+
+    [Fact]
+    public void UpcomingIsSortedByStart()
+    {
+        AddEventType("intro-call", 30, "Знакомство");
+        AddBooking("intro-call", At(28, 12, 0), At(28, 12, 30));
+        AddBooking("intro-call", At(28, 9, 0), At(28, 9, 30));
+        AddBooking("intro-call", At(27, 12, 45), At(27, 13, 15));
+
+        var upcoming = CreateService().GetUpcoming();
+
+        Assert.Equal(
+            [At(27, 12, 45), At(28, 9, 0), At(28, 12, 0)],
+            upcoming.Select(booking => booking.Start));
+    }
+
+    [Fact]
+    public void UpcomingCarriesTypeTitleAndGuestDetails()
+    {
+        AddEventType("intro-call", 30, "Знакомство");
+        AddBooking("intro-call", At(28, 10, 0), At(28, 10, 30));
+
+        var booking = Assert.Single(CreateService().GetUpcoming());
+
+        Assert.Equal("intro-call", booking.EventTypeId);
+        Assert.Equal("Знакомство", booking.EventTypeTitle);
+        Assert.Equal("Гость", booking.GuestName);
+        Assert.Equal("guest@example.com", booking.GuestEmail);
+        Assert.Equal("Перезвоните", booking.Comment);
+        Assert.Equal(At(28, 10, 30), booking.End);
+    }
+
+    private void AddBooking(string eventTypeId, DateTimeOffset start, DateTimeOffset end) =>
+        _bookings.TryAdd(new BookingEntity
+        {
+            Id = Guid.NewGuid(),
+            EventTypeId = eventTypeId,
+            Start = start,
+            End = end,
+            GuestName = "Гость",
+            GuestEmail = "guest@example.com",
+            Comment = "Перезвоните",
+            CreatedAt = Now,
+        });
+
     private CreateBookingResult Create(string eventTypeId, DateTimeOffset start) =>
         CreateService().Create(new CreateBookingCommand(
             eventTypeId,

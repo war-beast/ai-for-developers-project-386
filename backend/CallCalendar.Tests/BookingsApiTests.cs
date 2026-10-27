@@ -142,6 +142,65 @@ public class BookingsApiTests
         Assert.Equal(9, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
     }
 
+    [Fact]
+    public async Task ListReturnsUpcomingBookings()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
+        await CreateEventType(client, "intro-call", "Знакомство", 30);
+        var start = await FirstFreeSlot(client, "intro-call");
+        await Book(client, "intro-call", start);
+
+        var response = await client.GetAsync(
+            "/api/bookings",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+
+        var bookings = await response.Content.ReadFromJsonAsync<List<Booking>>(
+            TestContext.Current.CancellationToken);
+        var booking = Assert.Single(bookings!);
+        Assert.Equal("intro-call", booking.EventTypeId);
+        Assert.Equal("Знакомство", booking.EventTypeTitle);
+        Assert.Equal(start, booking.Start);
+        Assert.Equal("Гость", booking.GuestName);
+        Assert.Equal("guest@example.com", booking.GuestEmail);
+    }
+
+    [Fact]
+    public async Task ListIsSortedByStart()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
+        await CreateEventType(client, "intro-call", "Знакомство", 30);
+        var slots = await FreeSlots(client, "intro-call");
+        await Book(client, "intro-call", slots[1]);
+        await Book(client, "intro-call", slots[0]);
+
+        var bookings = await client.GetFromJsonAsync<List<Booking>>(
+            "/api/bookings",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([slots[0], slots[1]], bookings!.Select(booking => booking.Start));
+    }
+
+    [Fact]
+    public async Task ListIsEmptyBeforeAnyBooking()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync(
+            "/api/bookings",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var bookings = await response.Content.ReadFromJsonAsync<List<Booking>>(
+            TestContext.Current.CancellationToken);
+        Assert.Empty(bookings!);
+    }
+
     private static async Task CreateEventType(
         HttpClient client,
         string id,
@@ -155,12 +214,17 @@ public class BookingsApiTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
-    private static async Task<DateTimeOffset> FirstFreeSlot(HttpClient client, string eventTypeId)
+    private static async Task<DateTimeOffset> FirstFreeSlot(HttpClient client, string eventTypeId) =>
+        (await FreeSlots(client, eventTypeId))[0];
+
+    private static async Task<IReadOnlyList<DateTimeOffset>> FreeSlots(
+        HttpClient client,
+        string eventTypeId)
     {
         var window = await client.GetFromJsonAsync<SlotWindow>(
             $"/api/event-types/{eventTypeId}/slots",
             TestContext.Current.CancellationToken);
-        return window!.Days.SelectMany(day => day.Slots).First().Start;
+        return window!.Days.SelectMany(day => day.Slots).Select(slot => slot.Start).ToList();
     }
 
     private static async Task Book(HttpClient client, string eventTypeId, DateTimeOffset start)
