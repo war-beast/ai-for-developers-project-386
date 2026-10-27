@@ -1,17 +1,30 @@
 // @vitest-environment jsdom
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 
 import App from '@/App'
 
+vi.mock('@/api/client', () => ({
+  api: {
+    GET: vi.fn().mockResolvedValue({ data: [], response: new Response() }),
+  },
+}))
+
 afterEach(cleanup)
 
 function renderAt(path: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <App />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[path]}>
+        <App />
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -24,24 +37,22 @@ test('главная рассказывает про сервис', () => {
   expect(screen.getByText(/ближайшие\s+14 дней/)).toBeTruthy()
 })
 
-test('панель навигации ведёт на главную и на страницу записи', () => {
+test('панель навигации ведёт на каталог, админку и встречи', () => {
   renderAt('/')
 
   expect(screen.getByRole('link', { name: 'Календарь' }).getAttribute('href')).toBe('/')
+  expect(screen.getByRole('link', { name: 'Записаться' }).getAttribute('href')).toBe('/book')
+  expect(screen.getByRole('link', { name: 'Админка' }).getAttribute('href')).toBe('/admin')
   expect(
-    screen.getByRole('link', { name: 'Записаться на звонок' }).getAttribute('href'),
-  ).toBe('/book')
+    screen.getByRole('link', { name: 'Встречи' }).getAttribute('href'),
+  ).toBe('/admin/meetings')
 })
 
-test('страница записи — заглушка со ссылкой на главную', () => {
+test('страница записи показывает пустой каталог', async () => {
   renderAt('/book')
 
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
     'Запись на звонок',
   )
-  expect(screen.getByRole('link', { name: 'На главную' }).getAttribute('href')).toBe('/')
-  // Панель навигации есть и здесь.
-  expect(
-    screen.getByRole('link', { name: 'Записаться на звонок' }).getAttribute('href'),
-  ).toBe('/book')
+  expect(await screen.findByText('Пока нет типов встреч')).toBeTruthy()
 })
