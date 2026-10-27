@@ -1,7 +1,11 @@
-import { Link } from 'react-router'
 import { Calendar } from 'lucide-react'
+import { Link, NavLink } from 'react-router'
 
-import { Button } from '@/components/ui/button'
+const links = [
+  { to: '/book', label: 'Записаться', end: false },
+  { to: '/admin', label: 'Админка', end: true },
+  { to: '/admin/meetings', label: 'Встречи', end: false },
+]
 
 export function SiteHeader() {
   return (
@@ -14,13 +18,22 @@ export function SiteHeader() {
           <Calendar className="size-5" aria-hidden />
           Календарь
         </Link>
-        <Button
-          asChild
-          size="lg"
-          className="rounded-none bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-        >
-          <Link to="/book">Записаться на звонок</Link>
-        </Button>
+        <nav className="flex items-center gap-1 text-sm">
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={({ isActive }) =>
+                `px-3 py-1.5 transition-colors hover:bg-primary-foreground/10 ${
+                  isActive ? 'bg-primary-foreground/15 font-medium' : ''
+                }`
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </header>
   )
