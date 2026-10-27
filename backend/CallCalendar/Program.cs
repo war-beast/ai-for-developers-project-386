@@ -14,6 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<IEventTypeRepository, InMemoryEventTypeRepository>();
 builder.Services.AddSingleton<IEventTypeService, EventTypeService>();
 builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddSingleton<IBookingService, BookingService>();
 builder.Services.AddSingleton(builder.Configuration.GetSection("Owner").Get<OwnerOptions>() ?? new OwnerOptions());
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<ISlotService, SlotService>();

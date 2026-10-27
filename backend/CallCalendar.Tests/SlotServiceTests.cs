@@ -84,7 +84,7 @@ public class SlotServiceTests
     public void OccupiedIntervalIsExcluded()
     {
         AddEventType("intro-call", 30);
-        _bookings.Add(new BookingEntity
+        _bookings.TryAdd(new BookingEntity
         {
             Id = Guid.NewGuid(),
             EventTypeId = "other-type",

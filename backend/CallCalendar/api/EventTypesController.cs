@@ -26,14 +26,14 @@ public sealed class EventTypesController(
 
         if (result.SlugTaken)
         {
-            return ProblemResult(
+            return Problems.Result(
                 StatusCodes.Status409Conflict,
                 "event_type_exists",
                 "Тип встречи уже существует",
                 $"Тип встречи с id «{command.Id}» уже создан.");
         }
 
-        return ProblemResult(
+        return Problems.Result(
             StatusCodes.Status400BadRequest,
             "validation_failed",
             "Поля заполнены неверно",
@@ -49,37 +49,10 @@ public sealed class EventTypesController(
 
         return result.Window is not null
             ? Ok(result.Window)
-            : ProblemResult(
+            : Problems.Result(
                 StatusCodes.Status404NotFound,
                 "event_type_not_found",
                 "Тип встречи не найден",
                 $"Тип встречи с id «{eventTypeId}» не найден.");
-    }
-
-    private static ObjectResult ProblemResult(
-        int statusCode,
-        string code,
-        string title,
-        string detail,
-        IReadOnlyDictionary<string, string[]>? errors = null)
-    {
-        var problem = new ProblemDetails
-        {
-            Type = "about:blank",
-            Title = title,
-            Status = statusCode,
-            Detail = detail,
-        };
-        problem.Extensions["code"] = code;
-        if (errors is not null)
-        {
-            problem.Extensions["errors"] = errors;
-        }
-
-        return new ObjectResult(problem)
-        {
-            StatusCode = statusCode,
-            ContentTypes = { "application/problem+json" },
-        };
     }
 }

@@ -11,9 +11,6 @@ public sealed class SlotService(
     OwnerOptions options,
     TimeProvider timeProvider) : ISlotService
 {
-    private const int WindowDays = 14;
-    private const int SlotStepMinutes = 30;
-
     public SlotWindowResult GetWindow(string eventTypeId)
     {
         var eventType = eventTypeRepository.GetById(eventTypeId);
@@ -22,24 +19,20 @@ public sealed class SlotService(
             return SlotWindowResult.NotFound();
         }
 
-        var timeZone = TimeZoneInfo.FindSystemTimeZoneById(options.TimeZone);
-        var today = DateOnly.FromDateTime(
-            TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), timeZone).DateTime);
-
-        var windowStart = today.AddDays(1);
-        var windowEnd = today.AddDays(WindowDays);
+        var timeZone = SlotGrid.TimeZone(options);
+        var (windowStart, windowEnd) = SlotGrid.Window(options, timeProvider);
         var bookings = bookingRepository.GetAll();
 
         var days = Enumerable
-            .Range(1, WindowDays)
-            .Select(offset => BuildDay(windowStart.AddDays(offset - 1), eventType.DurationMinutes, timeZone, bookings))
+            .Range(0, SlotGrid.WindowDays)
+            .Select(offset => BuildDay(windowStart.AddDays(offset), eventType.DurationMinutes, timeZone, bookings))
             .ToList();
 
         return SlotWindowResult.Success(new SlotWindow(
             options.TimeZone,
             windowStart,
             windowEnd,
-            SlotStepMinutes,
+            SlotGrid.StepMinutes,
             days));
     }
 
@@ -49,27 +42,10 @@ public sealed class SlotService(
         TimeZoneInfo timeZone,
         IReadOnlyList<BookingEntity> bookings)
     {
-        if (!options.WorkDays.Contains(date.DayOfWeek))
-        {
-            return new SlotDay(date, []);
-        }
-
-        var dayStart = date.ToDateTime(options.WorkdayStart);
-        var dayEnd = date.ToDateTime(options.WorkdayEnd);
-        var slots = new List<Slot>();
-
-        for (var start = dayStart; start.AddMinutes(durationMinutes) <= dayEnd; start = start.AddMinutes(SlotStepMinutes))
-        {
-            var slotStart = new DateTimeOffset(start, timeZone.GetUtcOffset(start));
-            var slotEnd = slotStart.AddMinutes(durationMinutes);
-
-            if (bookings.Any(booking => slotStart < booking.End && booking.Start < slotEnd))
-            {
-                continue;
-            }
-
-            slots.Add(new Slot(slotStart, slotEnd));
-        }
+        var slots = SlotGrid
+            .Slots(date, durationMinutes, options, timeZone)
+            .Where(slot => !bookings.Any(booking => slot.Start < booking.End && booking.Start < slot.End))
+            .ToList();
 
         return new SlotDay(date, slots);
     }

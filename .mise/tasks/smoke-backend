@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke-проверка API: /health и реальные endpoint'ы типов встреч.
+# Smoke-проверка API: /health, типы встреч и бронирование.
 set -euo pipefail
 
 PORT=5150
@@ -63,3 +63,33 @@ curl -fsS "${URL}/api/event-types/${slug}/slots" | grep -q '"timeZone"' \
 
 status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types/missing/slots")
 [ "${status}" = "404" ] || fail "unknown type slots returned ${status}, expected 404"
+
+start=$(curl -fsS "${URL}/api/event-types/${slug}/slots" \
+  | grep -o '"start":"[^"]*"' | head -n 1 | cut -d'"' -f4)
+[ -n "${start}" ] || fail "slots response has no free slots"
+
+booking="{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' \
+  -X POST "${URL}/api/bookings" \
+  -H 'Content-Type: application/json' \
+  --data "${booking}")
+[ "${status}" = "201" ] || fail "POST /api/bookings returned ${status}, expected 201"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' \
+  -X POST "${URL}/api/bookings" \
+  -H 'Content-Type: application/json' \
+  --data "${booking}")
+[ "${status}" = "409" ] || fail "duplicate booking returned ${status}, expected 409"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' \
+  -X POST "${URL}/api/bookings" \
+  -H 'Content-Type: application/json' \
+  --data "{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"\",\"guestEmail\":\"not-an-email\"}")
+[ "${status}" = "400" ] || fail "invalid booking returned ${status}, expected 400"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' \
+  -X POST "${URL}/api/bookings" \
+  -H 'Content-Type: application/json' \
+  --data "{\"eventTypeId\":\"missing\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}")
+[ "${status}" = "404" ] || fail "unknown type booking returned ${status}, expected 404"
