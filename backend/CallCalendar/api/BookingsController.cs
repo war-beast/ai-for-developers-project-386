@@ -8,6 +8,10 @@ namespace CallCalendar.Api;
 [Route("api/bookings")]
 public sealed class BookingsController(IBookingService bookingService) : ControllerBase
 {
+    /// <summary>Предстоящие записи всех типов по возрастанию начала.</summary>
+    [HttpGet]
+    public IReadOnlyList<Booking> List() => bookingService.GetUpcoming();
+
     /// <summary>Забронировать свободный слот.</summary>
     [HttpPost]
     public IActionResult Create([FromBody] CreateBookingCommand command)

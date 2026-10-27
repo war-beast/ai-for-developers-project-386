@@ -49,18 +49,32 @@ public sealed class BookingService(
         };
 
         return bookingRepository.TryAdd(entity)
-            ? CreateBookingResult.Success(new Booking(
-                entity.Id,
-                entity.EventTypeId,
-                eventType.Title,
-                entity.Start,
-                entity.End,
-                entity.GuestName,
-                entity.GuestEmail,
-                entity.Comment,
-                entity.CreatedAt))
+            ? CreateBookingResult.Success(ToModel(entity))
             : CreateBookingResult.SlotAlreadyTaken();
     }
+
+    public IReadOnlyList<Booking> GetUpcoming()
+    {
+        var now = timeProvider.GetUtcNow();
+
+        return bookingRepository.GetAll()
+            .Where(booking => booking.End > now)
+            .OrderBy(booking => booking.Start)
+            .Select(ToModel)
+            .ToList();
+    }
+
+    private Booking ToModel(BookingEntity entity) =>
+        new(
+            entity.Id,
+            entity.EventTypeId,
+            eventTypeRepository.GetById(entity.EventTypeId)?.Title ?? entity.EventTypeId,
+            entity.Start,
+            entity.End,
+            entity.GuestName,
+            entity.GuestEmail,
+            entity.Comment,
+            entity.CreatedAt);
 
     private static Dictionary<string, string[]> Validate(CreateBookingCommand command)
     {
