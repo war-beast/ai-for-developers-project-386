@@ -31,15 +31,23 @@ problemFactory.Create(ProblemCodes.SlotTaken)
 ## Контракт API и фронтенд
 
 - Контракт описывается в **TypeSpec**: `api/main.tsp` (+ `api/tspconfig.yaml`).
-- `openapi.yaml` эмитится командой `mise run openapi` (не правится руками).
-- Клиентский SDK для TypeScript: сгенерированные типы в `frontend/src/api/schema.d.ts`
-  (обновление — `mise run sdk`), запросы через `openapi-fetch`.
+- Генерируемые файлы (правятся только генератором, вручную — никогда):
+  - `api/openapi.yaml` — OpenAPI из TypeSpec;
+  - `frontend/src/api/schema.d.ts` — типы клиентского SDK.
+- Обе генерации выполняет одна команда `mise run sdk` (`openapi` → `sdk`).
+  `mise run check` повторяет генерацию и падает, если файлы разошлись с коммитом.
+- Запросы к API идут только через `openapi-fetch` и типы из `schema.d.ts`.
+- Серверный код по контракту пишется вручную: подходящего генератора для
+  ASP.NET Core MVC нет (`openapi-generator` даёт заготовки контроллеров,
+  несовместимые с 3-слойной архитектурой).
 - Фронтенд: `frontend/` — Vite + React + TypeScript + shadcn/ui, состояние через TanStack Query.
 
 ## Окружение
 
 - Все версии инструментов зафиксированы в `mise.toml`; зависимости ставит `mise install`.
-- Единая команда проверок: `mise run check` (сборка + линтеры + типы + тесты). Она же вызывается из CI.
+- Единая команда проверок: `mise run check` (сборка + линтеры + типы + тесты +
+  дымовая проверка API + браузерный сценарий Playwright на реальном сервере).
+  Она же вызывается из CI.
 - Фоновые серверы (бекенд, Vite) описаны как демоны mise (`[daemons]` в mise.toml):
   `mise daemons start backend frontend`, `mise daemons logs backend`, `mise daemons stop ...`.
 - Гит-хуки настроены через hk (`hk.pkl`), включая проверку commit-msg.
@@ -48,8 +56,9 @@ problemFactory.Create(ProblemCodes.SlotTaken)
 
 Текст каждого коммита начинается с префикса: `feat:` — новая функция,
 `fix:` — исправление бага; остальные типы (`chore:`, `docs:`, `refactor:`, `test:`)
-используются по смыслу. Проверка выполняется хуком commit-msg (hk), сборки должны
-соответствовать этому формату.
+используются по смыслу. Каждый коммит реализации заканчивается ссылкой на тикет
+(`(#20)`), например: `feat: забронировать свободный слот (#20)`. Проверка
+префикса выполняется хуком commit-msg (hk); ссылку на тикет проверяем на ревью.
 
 ## Ветки и PR
 

@@ -60,14 +60,20 @@ run = [
   "mise run smoke-backend",
 ]
 
+[tasks.e2e]
+description = "Браузерный сценарий Playwright на реальных бекенде и Vite"
+run = "pnpm --dir frontend test:e2e"
+
 # Список "flat" и последовательный: dotnet format и dotnet test трогают одну
 # папку bin, поэтому check нельзя собирать из параллельных depends.
 [tasks.check]
-description = "Единая команда проверок: линтер + типы + дымовой тест (вызывается из CI)"
+description = "Единая команда проверок: линтер + типы + тесты + браузерный сценарий (вызывается из CI)"
 run = [
   "dotnet restore",
   "pnpm --dir frontend install",
   "pnpm --dir api install",
+  "mise run sdk",
+  "git diff --exit-code -- api/openapi.yaml frontend/src/api/schema.d.ts",
   "dotnet build",
   "dotnet format --verify-no-changes",
   "pnpm --dir frontend typecheck",
@@ -77,6 +83,7 @@ run = [
   "dotnet test",
   "pnpm --dir frontend test",
   "mise run smoke-backend",
+  "mise run e2e",
 ]
 
 # ---------------------------------------------------------------- демоны
