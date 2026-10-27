@@ -1,14 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { createBooking } from '@/api/bookings'
 import { fetchEventTypes } from '@/api/event-types'
 import { fetchSlots, type SlotWindow } from '@/api/slots'
 import { EventTypePage } from './EventTypePage'
 
 vi.mock('@/api/event-types', () => ({ fetchEventTypes: vi.fn() }))
 vi.mock('@/api/slots', () => ({ fetchSlots: vi.fn() }))
+vi.mock('@/api/bookings', () => ({ createBooking: vi.fn() }))
 
 function buildWindow(slotsByDay: Record<number, { start: string; end: string }[]>) {
   const days = Array.from({ length: 14 }, (_, index) => {
@@ -57,6 +59,7 @@ describe('EventTypePage', () => {
   beforeEach(() => {
     vi.mocked(fetchEventTypes).mockReset()
     vi.mocked(fetchSlots).mockReset()
+    vi.mocked(createBooking).mockReset()
   })
 
   it('shows the event type header and 14 day ribbon', async () => {
@@ -140,5 +143,74 @@ describe('EventTypePage', () => {
     renderPage()
 
     expect(await screen.findByText('Тип встречи не найден')).toBeTruthy()
+  })
+
+  it('books the selected slot and shows the confirmation screen', async () => {
+    const slot = {
+      start: '2026-10-28T09:00:00+03:00',
+      end: '2026-10-28T09:30:00+03:00',
+    }
+    mockWindow(buildWindow({ 0: [slot] }))
+    vi.mocked(createBooking).mockResolvedValue({
+      id: 'booking-1',
+      eventTypeId: 'intro-call',
+      eventTypeTitle: 'Знакомство',
+      start: slot.start,
+      end: slot.end,
+      guestName: 'Гость',
+      guestEmail: 'guest@example.com',
+      createdAt: '2026-10-27T10:00:00+00:00',
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: '09:00' }))
+    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Гость' } })
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'guest@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Забронировать' }))
+
+    expect(await screen.findByText('Вы записаны')).toBeTruthy()
+    expect(screen.getByText(/Знакомство/)).toBeTruthy()
+    expect(screen.getByText(/ср, 28 окт, 09:00/)).toBeTruthy()
+    expect(screen.getByText(/guest@example.com/)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Записаться ещё' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'На главную' })).toBeTruthy()
+  })
+
+  it('keeps guest data and refreshes slots when the slot is taken', async () => {
+    const slot = {
+      start: '2026-10-28T09:00:00+03:00',
+      end: '2026-10-28T09:30:00+03:00',
+    }
+    mockWindow(buildWindow({ 0: [slot] }))
+    vi.mocked(fetchSlots)
+      .mockResolvedValueOnce(buildWindow({ 0: [slot] }))
+      .mockResolvedValue(buildWindow({}))
+    vi.mocked(createBooking).mockRejectedValue({
+      type: 'about:blank',
+      title: 'Время уже занято',
+      status: 409,
+      code: 'slot_taken',
+    })
+
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: '09:00' }))
+    fireEvent.change(screen.getByLabelText('Имя'), { target: { value: 'Гость' } })
+    fireEvent.change(screen.getByLabelText('Email'), {
+      target: { value: 'guest@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Забронировать' }))
+
+    expect(await screen.findByText('Это время уже занято')).toBeTruthy()
+    expect((screen.getByLabelText('Имя') as HTMLInputElement).value).toBe('Гость')
+    expect((screen.getByLabelText('Email') as HTMLInputElement).value).toBe(
+      'guest@example.com',
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: '09:00' })).toBeNull(),
+    )
   })
 })
