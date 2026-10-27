@@ -53,18 +53,19 @@ expect_status 400 \
   POST /api/event-types \
   '{"id":"Bad Slug","title":"","description":"","durationMinutes":20}'
 
-curl -fsS "${URL}/api/event-types" | grep -q "\"${slug}\"" \
+curl -fsS "${URL}/api/event-types" | grep "\"${slug}\"" > /dev/null \
   || fail "created type ${slug} is missing from GET /api/event-types"
 
 expect_status 200 "GET slots" GET "/api/event-types/${slug}/slots"
 
-curl -fsS "${URL}/api/event-types/${slug}/slots" | grep -q '"timeZone"' \
+curl -fsS "${URL}/api/event-types/${slug}/slots" | grep '"timeZone"' > /dev/null \
   || fail "slots response lacks timeZone"
 
 expect_status 404 "unknown type slots" GET /api/event-types/missing/slots
 
+# sed, а не head: head закрывает пайп раньше и под pipefail даёт SIGPIPE 141.
 start=$(curl -fsS "${URL}/api/event-types/${slug}/slots" \
-  | grep -o '"start":"[^"]*"' | head -n 1 | cut -d'"' -f4)
+  | grep -o '"start":"[^"]*"' | sed -n '1p' | cut -d'"' -f4)
 [ -n "${start}" ] || fail "slots response has no free slots"
 
 booking="{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
@@ -73,7 +74,7 @@ expect_status 201 "POST /api/bookings" POST /api/bookings "${booking}"
 expect_status 409 "duplicate POST /api/bookings" POST /api/bookings "${booking}"
 expect_status 200 "GET /api/bookings" GET /api/bookings
 
-curl -fsS "${URL}/api/bookings" | grep -q "\"start\":\"${start}\"" \
+curl -fsS "${URL}/api/bookings" | grep "\"start\":\"${start}\"" > /dev/null \
   || fail "created booking is missing from GET /api/bookings"
 
 expect_status 400 \
