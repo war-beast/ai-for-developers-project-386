@@ -6,5 +6,6 @@ public interface IBookingRepository
 {
     IReadOnlyList<BookingEntity> GetAll();
 
-    void Add(BookingEntity booking);
+    /// <summary>Добавляет запись, если она не пересекается ни с одной существующей.</summary>
+    bool TryAdd(BookingEntity booking);
 }

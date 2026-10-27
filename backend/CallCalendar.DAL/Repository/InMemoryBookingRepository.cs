@@ -19,11 +19,18 @@ public sealed class InMemoryBookingRepository : IBookingRepository
         }
     }
 
-    public void Add(BookingEntity booking)
+    public bool TryAdd(BookingEntity booking)
     {
         lock (_lock)
         {
+            // Полуинтервалы: запись сразу после окончания предыдущей пересечением не считается.
+            if (_bookings.Exists(existing => booking.Start < existing.End && existing.Start < booking.End))
+            {
+                return false;
+            }
+
             _bookings.Add(booking);
+            return true;
         }
     }
 }
