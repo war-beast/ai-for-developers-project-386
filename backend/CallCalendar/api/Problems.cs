@@ -1,3 +1,4 @@
+using CallCalendar.Api.ProblemResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -37,7 +38,7 @@ internal static class Problems
     public static ObjectResult ValidationFailed(ModelStateDictionary modelState) =>
         Result(
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ProblemCodes.ValidationFailed,
             "Поля заполнены неверно",
             "Проверьте выделенные поля.",
             modelState
@@ -55,7 +56,9 @@ internal static class Problems
     /// <summary>«$.guestEmail» → «guestEmail»: ключи errors совпадают с полями формы.</summary>
     private static string FieldName(string key)
     {
-        var name = key.TrimStart('$', '.').Split('.').Last();
+        var name = key.TrimStart('$', '.')
+            .Split('.')
+            .Last();
 
         return name.Length == 0 ? "body" : char.ToLowerInvariant(name[0]) + name[1..];
     }

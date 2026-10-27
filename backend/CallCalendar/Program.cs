@@ -1,4 +1,5 @@
 using CallCalendar.Api;
+using CallCalendar.Api.ProblemResults;
 using CallCalendar.BLL.Interface;
 using CallCalendar.BLL.Model;
 using CallCalendar.BLL.Service;
@@ -18,12 +19,13 @@ builder.Services
 
 // Данные хранятся в памяти процесса и сбрасываются при рестарте.
 builder.Services.AddSingleton<IEventTypeRepository, InMemoryEventTypeRepository>();
-builder.Services.AddSingleton<IEventTypeService, EventTypeService>();
+builder.Services.AddTransient<IEventTypeService, EventTypeService>();
 builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
-builder.Services.AddSingleton<IBookingService, BookingService>();
-builder.Services.AddSingleton(builder.Configuration.GetSection("Owner").Get<OwnerOptions>() ?? new OwnerOptions());
+builder.Services.AddTransient<IBookingService, BookingService>();
+builder.Services.Configure<OwnerOptions>(builder.Configuration.GetSection("Owner"));
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<ISlotService, SlotService>();
+builder.Services.AddTransient<ISlotService, SlotService>();
+builder.Services.AddTransient<IProblemResultFactory, ProblemResultFactory>();
 
 var app = builder.Build();
 

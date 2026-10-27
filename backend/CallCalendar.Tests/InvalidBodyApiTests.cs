@@ -24,8 +24,11 @@ public class InvalidBodyApiTests
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
 
         using var problem = await ReadProblem(response);
-        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code").GetString());
-        Assert.True(problem.RootElement.GetProperty("errors").EnumerateObject().Any());
+        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code")
+            .GetString());
+        Assert.True(problem.RootElement.GetProperty("errors")
+            .EnumerateObject()
+            .Any());
     }
 
     [Fact]
@@ -46,10 +49,12 @@ public class InvalidBodyApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         using var problem = await ReadProblem(response);
-        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code")
+            .GetString());
 
         var errors = problem.RootElement.GetProperty("errors");
-        Assert.NotEmpty(errors.GetProperty("title").EnumerateArray());
+        Assert.NotEmpty(errors.GetProperty("title")
+            .EnumerateArray());
         Assert.All(errors.EnumerateObject(), error => Assert.DoesNotContain('$', error.Name));
     }
 
@@ -71,8 +76,11 @@ public class InvalidBodyApiTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         using var problem = await ReadProblem(response);
-        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code").GetString());
-        Assert.NotEmpty(problem.RootElement.GetProperty("errors").GetProperty("start").EnumerateArray());
+        Assert.Equal("validation_failed", problem.RootElement.GetProperty("code")
+            .GetString());
+        Assert.NotEmpty(problem.RootElement.GetProperty("errors")
+            .GetProperty("start")
+            .EnumerateArray());
     }
 
     private static async Task<JsonDocument> ReadProblem(HttpResponseMessage response) =>

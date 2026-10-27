@@ -34,19 +34,25 @@ public class SlotsApiTests
             TestContext.Current.CancellationToken));
         var root = json.RootElement;
 
-        Assert.Equal("Europe/Moscow", root.GetProperty("timeZone").GetString());
-        Assert.Equal(30, root.GetProperty("stepMinutes").GetInt32());
+        Assert.Equal("Europe/Moscow", root.GetProperty("timeZone")
+            .GetString());
+        Assert.Equal(30, root.GetProperty("stepMinutes")
+            .GetInt32());
 
         var moscow = TimeZoneInfo.FindSystemTimeZoneById("Europe/Moscow");
         var tomorrow = DateOnly.FromDateTime(
-            TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, moscow).DateTime).AddDays(1);
+            TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, moscow).DateTime)
+            .AddDays(1);
 
         Assert.Equal(
             tomorrow.ToString("yyyy-MM-dd"),
-            root.GetProperty("windowStart").GetString());
+            root.GetProperty("windowStart")
+                .GetString());
         Assert.Equal(
-            tomorrow.AddDays(13).ToString("yyyy-MM-dd"),
-            root.GetProperty("windowEnd").GetString());
+            tomorrow.AddDays(13)
+                .ToString("yyyy-MM-dd"),
+            root.GetProperty("windowEnd")
+                .GetString());
 
         var days = root.GetProperty("days");
         Assert.Equal(14, days.GetArrayLength());
@@ -57,7 +63,8 @@ public class SlotsApiTests
             .EnumerateArray()
             .First();
 
-        Assert.Equal("T09:00:00+03:00", firstSlot.GetProperty("start").GetString()![10..]);
+        Assert.Equal("T09:00:00+03:00", firstSlot.GetProperty("start")
+            .GetString()![10..]);
     }
 
     [Fact]
@@ -75,7 +82,8 @@ public class SlotsApiTests
 
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken));
-        Assert.Equal("event_type_not_found", problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal("event_type_not_found", problem.RootElement.GetProperty("code")
+            .GetString());
     }
 
     [Fact]
@@ -107,6 +115,7 @@ public class SlotsApiTests
         Assert.Equal(14, days.GetArrayLength());
         Assert.All(
             days.EnumerateArray(),
-            day => Assert.Equal(0, day.GetProperty("slots").GetArrayLength()));
+            day => Assert.Equal(0, day.GetProperty("slots")
+                .GetArrayLength()));
     }
 }

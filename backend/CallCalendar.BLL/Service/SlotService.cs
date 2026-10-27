@@ -3,15 +3,18 @@ using CallCalendar.BLL.Model;
 using CallCalendar.DAL;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Interface;
+using Microsoft.Extensions.Options;
 
 namespace CallCalendar.BLL.Service;
 
 public sealed class SlotService(
     IEventTypeRepository eventTypeRepository,
     IBookingRepository bookingRepository,
-    OwnerOptions options,
+    IOptions<OwnerOptions> ownerOptions,
     TimeProvider timeProvider) : ISlotService
 {
+    private readonly OwnerOptions options = ownerOptions.Value;
+
     public SlotWindowResult GetWindow(string eventTypeId)
     {
         var eventType = eventTypeRepository.GetById(eventTypeId);

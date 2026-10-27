@@ -55,6 +55,7 @@ internal static class SlotGrid
 
         return date >= windowStart
             && date <= windowEnd
-            && Slots(date, durationMinutes, options, timeZone).Any(slot => slot.Start == start);
+            && Slots(date, durationMinutes, options, timeZone)
+                .Any(slot => slot.Start == start);
     }
 }

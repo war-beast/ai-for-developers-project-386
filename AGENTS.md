@@ -14,6 +14,20 @@
 Зависимости строго односторонние: `CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL`.
 `CallCalendar.Tests` ссылается на BLL, а для интеграционных тестов API — на `CallCalendar`.
 
+## Форматирование C#
+
+Если в одной строке больше одного вызова метода после точки, то начиная со
+второго каждый вызов переносится на новую строку; точка остаётся в начале
+строки, отступ — +4 пробела от начала выражения:
+
+```csharp
+problemFactory.Create(ProblemCodes.SlotTaken)
+    .GetProblemResult();
+```
+
+Правило действует для всего C#-кода в `backend/`, включая тесты.
+`dotnet format` его не проверяет — соблюдаем вручную.
+
 ## Контракт API и фронтенд
 
 - Контракт описывается в **TypeSpec**: `api/main.tsp` (+ `api/tspconfig.yaml`).
