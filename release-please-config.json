@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "callcalendar",
+      "bootstrap-sha": "405e47a4459f6e24f9974341b93863d2e925eefa"
+    }
+  }
+}

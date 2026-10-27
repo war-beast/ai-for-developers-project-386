@@ -1,0 +1,26 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions: {}
+
+# Без cancel-in-progress: отмена посреди релиза оставляет его недоделанным
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # googleapis/release-please-action v5.0.0
+        with:
+          # Release-PR открывается в dev: туда же идут все задачи из AGENTS.md
+          target-branch: dev
