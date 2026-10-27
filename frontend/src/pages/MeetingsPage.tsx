@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchBookings } from '@/api/bookings'
-import { formatDayLabel, formatSlotTime } from '@/lib/dates'
+import { formatDateTime, OWNER_TIME_ZONE } from '@/lib/dates'
 
 export function MeetingsPage() {
   const { data: bookings = [], isPending } = useQuery({
@@ -15,7 +15,7 @@ export function MeetingsPage() {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-10">
       <h1 className="text-4xl font-light tracking-tight">Встречи</h1>
       <p className="text-sm text-muted-foreground">
-        Предстоящие встречи всех типов · Europe/Moscow
+        Предстоящие встречи всех типов · {OWNER_TIME_ZONE}
       </p>
 
       {isPending ? (
@@ -30,8 +30,7 @@ export function MeetingsPage() {
               className="border border-border bg-card px-4 py-3 text-sm"
             >
               <p className="font-medium">
-                {formatDayLabel(booking.start.slice(0, 10))},{' '}
-                {formatSlotTime(booking.start)} — {booking.eventTypeTitle}
+                {formatDateTime(booking.start)} — {booking.eventTypeTitle}
               </p>
               <p className="text-muted-foreground">
                 {booking.guestName} — {booking.guestEmail}

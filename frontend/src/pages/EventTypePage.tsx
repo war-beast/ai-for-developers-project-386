@@ -6,12 +6,8 @@ import { createBooking, type Booking, type BookingProblem } from '@/api/bookings
 import { fetchEventTypes } from '@/api/event-types'
 import { fetchSlots } from '@/api/slots'
 import { Button } from '@/components/ui/button'
-import { formatDayLabel, formatSlotTime } from '@/lib/dates'
-
-const inputClassName =
-  'h-9 w-full border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive'
-
-type FieldErrors = Record<string, string[]>
+import { TextField, type FieldErrors } from '@/components/text-field'
+import { formatDateTime, formatDayLabel, formatSlotTime } from '@/lib/dates'
 
 export function EventTypePage() {
   const { typeId = '' } = useParams()
@@ -55,6 +51,7 @@ export function EventTypePage() {
     onError: (problem) => {
       if (problem.code === 'slot_taken') {
         setSlotTaken(true)
+        setSelectedSlot(null)
         setFieldErrors({})
         // Слот заняли между выбором и отправкой: перезапрашиваем выдачу.
         void queryClient.invalidateQueries({ queryKey: ['slots', typeId] })
@@ -99,8 +96,7 @@ export function EventTypePage() {
         <h1 className="text-4xl font-light tracking-tight">Вы записаны</h1>
         <p className="text-lg">{booking.eventTypeTitle}</p>
         <p className="text-muted-foreground">
-          {formatDayLabel(booking.start.slice(0, 10))},{' '}
-          {formatSlotTime(booking.start)} · {slotWindow.timeZone}
+          {formatDateTime(booking.start)} · {slotWindow.timeZone}
         </p>
         <p className="text-muted-foreground">
           Подтверждение придёт на {booking.guestEmail}.
@@ -199,39 +195,44 @@ export function EventTypePage() {
         )}
       </section>
 
-      {selectedSlot ? (
+      {selectedSlot || slotTaken ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-medium">
-            Запись на {formatDayLabel(selectedSlot.slice(0, 10))},{' '}
-            {formatSlotTime(selectedSlot)}
+            {selectedSlot
+              ? `Запись на ${formatDateTime(selectedSlot)}`
+              : 'Выберите другое время'}
           </h2>
           <form className="grid gap-4" onSubmit={handleSubmit}>
-            <GuestField
-              name="guestName"
+            <TextField
+              id="booking-guestName"
               label="Имя"
               value={guestName}
               errors={fieldErrors.guestName}
               onChange={setGuestName}
             />
-            <GuestField
-              name="guestEmail"
+            <TextField
+              id="booking-guestEmail"
               label="Email"
               type="email"
               value={guestEmail}
               errors={fieldErrors.guestEmail}
               onChange={setGuestEmail}
             />
-            <GuestField
-              name="comment"
+            <TextField
+              id="booking-comment"
               label="Комментарий"
               value={comment}
               errors={fieldErrors.comment}
-              multiline
+              rows={3}
               onChange={setComment}
             />
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
-                <Button type="submit" size="lg" disabled={create.isPending}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={create.isPending || !selectedSlot}
+                >
                   Забронировать
                 </Button>
                 {create.isError && Object.keys(fieldErrors).length === 0 && !slotTaken ? (
@@ -250,62 +251,6 @@ export function EventTypePage() {
         </section>
       ) : null}
     </main>
-  )
-}
-
-type GuestFieldProps = {
-  name: string
-  label: string
-  value: string
-  errors?: string[]
-  type?: 'text' | 'email'
-  multiline?: boolean
-  onChange: (value: string) => void
-}
-
-function GuestField({
-  name,
-  label,
-  value,
-  errors,
-  type = 'text',
-  multiline = false,
-  onChange,
-}: GuestFieldProps) {
-  const id = `booking-${name}`
-
-  return (
-    <div className="grid gap-1">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {multiline ? (
-        <textarea
-          id={id}
-          name={name}
-          value={value}
-          rows={3}
-          aria-invalid={errors ? true : undefined}
-          className={`${inputClassName} h-auto py-2`}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      ) : (
-        <input
-          id={id}
-          name={name}
-          type={type}
-          value={value}
-          aria-invalid={errors ? true : undefined}
-          className={inputClassName}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      )}
-      {errors?.map((message) => (
-        <p key={message} className="text-sm text-destructive">
-          {message}
-        </p>
-      ))}
-    </div>
   )
 }
 

@@ -9,6 +9,7 @@ import {
 } from '@/api/event-types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { TextField, type FieldErrors } from '@/components/text-field'
 
 type FormState = {
   id: string
@@ -17,70 +18,11 @@ type FormState = {
   durationMinutes: number
 }
 
-type FieldErrors = Record<string, string[]>
-
 const emptyForm: FormState = {
   id: '',
   title: '',
   description: '',
   durationMinutes: 30,
-}
-
-const inputClassName =
-  'h-9 w-full border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive'
-
-type FieldProps = {
-  name: keyof FormState
-  label: string
-  value: string | number
-  errors?: string[]
-  type?: 'text' | 'number' | 'textarea'
-  onChange: (value: string) => void
-}
-
-function Field({
-  name,
-  label,
-  value,
-  errors,
-  type = 'text',
-  onChange,
-}: FieldProps) {
-  const id = `event-type-${name}`
-
-  return (
-    <div className="grid gap-1">
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
-      {type === 'textarea' ? (
-        <textarea
-          id={id}
-          name={name}
-          value={value}
-          rows={3}
-          aria-invalid={errors ? true : undefined}
-          className={`${inputClassName} h-auto py-2`}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      ) : (
-        <input
-          id={id}
-          name={name}
-          type={type}
-          value={value}
-          aria-invalid={errors ? true : undefined}
-          className={inputClassName}
-          onChange={(event) => onChange(event.target.value)}
-        />
-      )}
-      {errors?.map((message) => (
-        <p key={message} className="text-sm text-destructive">
-          {message}
-        </p>
-      ))}
-    </div>
-  )
 }
 
 export function AdminPage() {
@@ -128,30 +70,30 @@ export function AdminPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-xl font-medium">Новый тип встречи</h2>
         <form className="grid gap-4" onSubmit={handleSubmit}>
-          <Field
-            name="id"
+          <TextField
+            id="event-type-id"
             label="Id (slug)"
             value={form.id}
             errors={fieldErrors.id}
             onChange={(value) => setField('id', value)}
           />
-          <Field
-            name="title"
+          <TextField
+            id="event-type-title"
             label="Название"
             value={form.title}
             errors={fieldErrors.title}
             onChange={(value) => setField('title', value)}
           />
-          <Field
-            name="description"
+          <TextField
+            id="event-type-description"
             label="Описание"
-            type="textarea"
+            rows={3}
             value={form.description}
             errors={fieldErrors.description}
             onChange={(value) => setField('description', value)}
           />
-          <Field
-            name="durationMinutes"
+          <TextField
+            id="event-type-duration"
             label="Длительность, минут"
             type="number"
             value={form.durationMinutes}
