@@ -60,6 +60,13 @@ problemFactory.Create(ProblemCodes.SlotTaken)
 (`(#20)`), например: `feat: забронировать свободный слот (#20)`. Проверка
 префикса выполняется хуком commit-msg (hk); ссылку на тикет проверяем на ревью.
 
+Версию и `CHANGELOG.md` двигают только `feat:`, `fix:` и breaking change;
+`chore:`/`docs:`/`refactor:`/`test:` в релиз не попадают. Поэтому меняется
+поведение пользователя или контракт API — `feat`/`fix`, только сборка, CI,
+тесты или рефакторинг без изменения поведения — остальные типы.
+`CHANGELOG.md` и `.release-please-manifest.json` генерирует release-please
+через Release PR в `dev` — руками не правим, Release PR нужно смержить.
+
 ## Ветки и PR
 
 - Каждую новую задачу начинаем в новой ветке: `feat/<краткое-имя>` (git не
