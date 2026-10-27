@@ -6,7 +6,9 @@ namespace CallCalendar.Api;
 
 [ApiController]
 [Route("api/event-types")]
-public sealed class EventTypesController(IEventTypeService eventTypeService) : ControllerBase
+public sealed class EventTypesController(
+    IEventTypeService eventTypeService,
+    ISlotService slotService) : ControllerBase
 {
     /// <summary>Список типов встреч в порядке создания.</summary>
     [HttpGet]
@@ -37,6 +39,21 @@ public sealed class EventTypesController(IEventTypeService eventTypeService) : C
             "Поля заполнены неверно",
             "Проверьте выделенные поля.",
             result.Errors);
+    }
+
+    /// <summary>Свободные слоты типа встречи на всё окно записи.</summary>
+    [HttpGet("{eventTypeId}/slots")]
+    public IActionResult Slots(string eventTypeId)
+    {
+        var result = slotService.GetWindow(eventTypeId);
+
+        return result.Window is not null
+            ? Ok(result.Window)
+            : ProblemResult(
+                StatusCodes.Status404NotFound,
+                "event_type_not_found",
+                "Тип встречи не найден",
+                $"Тип встречи с id «{eventTypeId}» не найден.");
     }
 
     private static ObjectResult ProblemResult(

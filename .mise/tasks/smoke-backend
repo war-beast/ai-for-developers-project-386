@@ -54,3 +54,12 @@ status=$(curl -sS -o /dev/null -w '%{http_code}' \
 
 curl -fsS "${URL}/api/event-types" | grep -q "\"${slug}\"" \
   || fail "created type ${slug} is missing from GET /api/event-types"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types/${slug}/slots")
+[ "${status}" = "200" ] || fail "GET slots returned ${status}, expected 200"
+
+curl -fsS "${URL}/api/event-types/${slug}/slots" | grep -q '"timeZone"' \
+  || fail "slots response lacks timeZone"
+
+status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types/missing/slots")
+[ "${status}" = "404" ] || fail "unknown type slots returned ${status}, expected 404"

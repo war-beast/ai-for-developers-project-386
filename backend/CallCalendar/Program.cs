@@ -1,4 +1,5 @@
 using CallCalendar.BLL.Interface;
+using CallCalendar.BLL.Model;
 using CallCalendar.BLL.Service;
 using CallCalendar.DAL.Interface;
 using CallCalendar.DAL.Repository;
@@ -12,6 +13,10 @@ builder.Services.AddControllers();
 // Данные хранятся в памяти процесса и сбрасываются при рестарте.
 builder.Services.AddSingleton<IEventTypeRepository, InMemoryEventTypeRepository>();
 builder.Services.AddSingleton<IEventTypeService, EventTypeService>();
+builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddSingleton(builder.Configuration.GetSection("Owner").Get<OwnerOptions>() ?? new OwnerOptions());
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<ISlotService, SlotService>();
 
 var app = builder.Build();
 
