@@ -8,6 +8,8 @@ obj/
 node_modules/
 dist/
 .pnpm-store/
+test-results/
+playwright-report/
 
 # Environment & IDE
 .env

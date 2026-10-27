@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Дымовой прогон: бекенд поднимается и отвечает на /health, затем гасим его.
+# Smoke-проверка API: /health, типы встреч и бронирование.
 set -euo pipefail
 
 PORT=5150
@@ -22,3 +22,71 @@ if [ "${ready}" != "1" ]; then
   echo "backend did not become ready on ${URL}" >&2
   exit 1
 fi
+
+fail() {
+  echo "smoke check failed: $1" >&2
+  exit 1
+}
+
+# expect_status <expected> <description> <method> <path> [json-body]
+expect_status() {
+  local expected="$1" description="$2" method="$3" path="$4" data="${5:-}"
+  local args=(-sS -o /dev/null -w '%{http_code}' -X "${method}" "${URL}${path}")
+  if [ -n "${data}" ]; then
+    args+=(-H 'Content-Type: application/json' --data "${data}")
+  fi
+
+  local status
+  status=$(curl "${args[@]}")
+  [ "${status}" = "${expected}" ] || fail "${description} returned ${status}, expected ${expected}"
+}
+
+expect_status 200 "GET /api/event-types" GET /api/event-types
+
+slug="smoke-$(date +%s)"
+body="{\"id\":\"${slug}\",\"title\":\"Smoke\",\"description\":\"Smoke check\",\"durationMinutes\":30}"
+
+expect_status 201 "POST /api/event-types" POST /api/event-types "${body}"
+expect_status 409 "duplicate POST /api/event-types" POST /api/event-types "${body}"
+expect_status 400 \
+  "invalid POST /api/event-types" \
+  POST /api/event-types \
+  '{"id":"Bad Slug","title":"","description":"","durationMinutes":20}'
+
+curl -fsS "${URL}/api/event-types" | grep -q "\"${slug}\"" \
+  || fail "created type ${slug} is missing from GET /api/event-types"
+
+expect_status 200 "GET slots" GET "/api/event-types/${slug}/slots"
+
+curl -fsS "${URL}/api/event-types/${slug}/slots" | grep -q '"timeZone"' \
+  || fail "slots response lacks timeZone"
+
+expect_status 404 "unknown type slots" GET /api/event-types/missing/slots
+
+start=$(curl -fsS "${URL}/api/event-types/${slug}/slots" \
+  | grep -o '"start":"[^"]*"' | head -n 1 | cut -d'"' -f4)
+[ -n "${start}" ] || fail "slots response has no free slots"
+
+booking="{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
+
+expect_status 201 "POST /api/bookings" POST /api/bookings "${booking}"
+expect_status 409 "duplicate POST /api/bookings" POST /api/bookings "${booking}"
+expect_status 200 "GET /api/bookings" GET /api/bookings
+
+curl -fsS "${URL}/api/bookings" | grep -q "\"start\":\"${start}\"" \
+  || fail "created booking is missing from GET /api/bookings"
+
+expect_status 400 \
+  "invalid POST /api/bookings" \
+  POST /api/bookings \
+  "{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"\",\"guestEmail\":\"not-an-email\"}"
+
+expect_status 404 \
+  "unknown type booking" \
+  POST /api/bookings \
+  "{\"eventTypeId\":\"missing\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
+
+expect_status 400 \
+  "malformed POST /api/bookings" \
+  POST /api/bookings \
+  '{"eventTypeId":"smoke","start":42,"guestName":"Smoke","guestEmail":"smoke@example.com"}'
