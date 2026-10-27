@@ -4,17 +4,34 @@
 [![hexlet-check](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/war-beast/ai-for-developers-project-386/actions)
 [![check](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/check.yml/badge.svg)](https://github.com/war-beast/ai-for-developers-project-386/actions/workflows/check.yml)
 
-Разработайте совместно с ИИ сервис для бронирования календаря
+Сервис записи на звонок: владелец публикует доступное время, а гость без
+регистрации выбирает тип встречи и свободный слот в ближайшие 14 дней.
 
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
 ## Стек
 
-- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `src/CallCalendar` (представление, там же REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
+- Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (слой представления, REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
+- Фронтенд: `frontend/` — Vite + React + TypeScript, shadcn/ui, TanStack Query, react-router. Это единственный пользовательский интерфейс приложения
 - Контракт API: TypeSpec (`api/main.tsp`) → OpenAPI (`api/openapi.yaml`) → клиентский SDK для TypeScript (`frontend/src/api/schema.d.ts`, генератор openapi-typescript, запросы через openapi-fetch)
-- Фронтенд: Vite + React + TypeScript, shadcn/ui, TanStack Query
 - Инструменты: mise (версии в `mise.toml`), git-хуки через hk (`hk.pkl`), демоны через pitchfork
+
+## Что уже работает
+
+- Главная страница `/` — рассказывает про сервис
+- `/book` — каталог типов встреч: название, описание, длительность
+- `/book/:typeId` — свободные слоты типа встречи на 14 дней: лента дней, выбор дня и времени, форма гостя и подтверждение записи
+- `/admin` — список типов и форма создания; ошибки полей приходят из API
+- `/admin/meetings` — предстоящие встречи всех типов по возрастанию начала; пустое состояние, обновление при возврате на вкладку
+- `GET/POST /api/event-types` — список и создание типов встреч
+- `GET /api/event-types/{eventTypeId}/slots` — свободные слоты на окно записи
+- `POST /api/bookings` — запись гостя на свободный слот; пересекающиеся интервалы отклоняются с `409 slot_taken`
+- `GET /api/bookings` — предстоящие записи всех типов (включая идущую) по возрастанию начала
+- `GET /health` — проверка живости бекенда
+
+Данные хранятся в памяти процесса: после рестарта бекенда созданные типы
+встреч и записи пропадают. Базы данных и сохранения состояния нет.
 
 ## Установка
 
@@ -29,7 +46,7 @@ mise run install  # зависимости dotnet/node (frontend, api)
 
 ## Использование
 
-Запуск через демоны (бекенд на :5150, фронтенд на :5173):
+Запуск через демоны (UI на :5173, API на :5150):
 
 ```bash
 mise daemons start backend frontend
@@ -44,11 +61,24 @@ mise run openapi   # TypeSpec -> openapi.yaml
 mise run sdk       # openapi.yaml -> frontend/src/api/schema.d.ts
 ```
 
-Полный прогон проверок (его же делает CI): сборка, линтеры, типы, тесты:
+Полный прогон проверок (его же делает CI): сборка, линтеры, типы, тесты
+бекенда и фронтенда, проверка актуальности сгенерированных контракта и SDK,
+дымовая проверка API и браузерный сценарий Playwright на реальных серверах:
 
 ```bash
 mise run check
 ```
+
+Отдельно браузерный сценарий Playwright (поднимает реальные бекенд и Vite):
+
+```bash
+mise run e2e
+```
+
+## Документация
+
+- `GLOSSARY.md` — словарь предметной области
+- `docs/adr/` — принятые архитектурные решения
 
 ---
 

@@ -1,0 +1,3 @@
+# Vendored skill prompts (installed via skills-lock.json) are upstream prose, not ours to respell.
+[files]
+extend-exclude = [".agents/skills/**"]

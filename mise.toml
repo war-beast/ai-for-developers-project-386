@@ -13,9 +13,6 @@ pitchfork = "2.32.2"
 typos = "1.51.1"
 jactionlint = "2.3.0"
 
-[env]
-SMOKE_URL = "http://127.0.0.1:5150"
-
 # ---------------------------------------------------------------- задачи
 
 [tasks.install]
@@ -42,7 +39,7 @@ run = [
   "pnpm --dir frontend typecheck",
   "pnpm --dir frontend lint",
   "typos",
-  "jactionlint .github/workflows/check.yml",
+  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml",
 ]
 
 [tasks.openapi]
@@ -59,32 +56,41 @@ description = "Юнит- и дымовые тесты (бекенд и фрон�
 depends = ["build"]
 run = [
   "dotnet test",
+  "pnpm --dir frontend test",
   "mise run smoke-backend",
 ]
+
+[tasks.e2e]
+description = "Браузерный сценарий Playwright на реальных бекенде и Vite"
+run = "pnpm --dir frontend test:e2e"
 
 # Список "flat" и последовательный: dotnet format и dotnet test трогают одну
 # папку bin, поэтому check нельзя собирать из параллельных depends.
 [tasks.check]
-description = "Единая команда проверок: линтер + типы + дымовой тест (вызывается из CI)"
+description = "Единая команда проверок: линтер + типы + тесты + браузерный сценарий (вызывается из CI)"
 run = [
   "dotnet restore",
   "pnpm --dir frontend install",
   "pnpm --dir api install",
+  "mise run sdk",
+  "git diff --exit-code -- api/openapi.yaml frontend/src/api/schema.d.ts",
   "dotnet build",
   "dotnet format --verify-no-changes",
   "pnpm --dir frontend typecheck",
   "pnpm --dir frontend lint",
   "typos",
-  "jactionlint .github/workflows/check.yml",
+  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml",
   "dotnet test",
+  "pnpm --dir frontend test",
   "mise run smoke-backend",
+  "mise run e2e",
 ]
 
 # ---------------------------------------------------------------- демоны
 
 [daemons.backend]
-run = "dotnet run --project src/CallCalendar --urls http://127.0.0.1:5150"
-ready_cmd = "curl -fsS http://127.0.0.1:5150/api/calendar/slots"
+run = "dotnet run --project backend/CallCalendar --urls http://127.0.0.1:5150"
+ready_cmd = "curl -fsS http://127.0.0.1:5150/health"
 
 [daemons.frontend]
 run = "pnpm --dir frontend dev --host 127.0.0.1"

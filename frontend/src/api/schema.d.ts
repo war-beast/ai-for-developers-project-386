@@ -4,15 +4,51 @@
  */
 
 export interface paths {
-    "/api/calendar/slots": {
+    "/api/bookings": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Список слотов календаря. */
-        get: operations["Calendar_listSlots"];
+        /** @description Предстоящие записи владельца. */
+        get: operations["Bookings_list"];
+        put?: never;
+        /** @description Забронировать слот. */
+        post: operations["Bookings_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/event-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Список типов встреч. */
+        get: operations["EventTypes_list"];
+        put?: never;
+        /** @description Создать тип встречи. */
+        post: operations["EventTypes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/event-types/{eventTypeId}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Свободные слоты типа встречи на всё окно записи. */
+        get: operations["EventTypes_slots"];
         put?: never;
         post?: never;
         delete?: never;
@@ -25,14 +61,107 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Слот звонка в расписании. */
-        CallSlot: {
-            /** Format: int32 */
-            id: number;
-            title: string;
+        /** @description Созданная запись. */
+        Booking: {
+            id: string;
+            eventTypeId: string;
+            eventTypeTitle: string;
             /** Format: date-time */
-            startsAt: string;
+            start: string;
+            /** Format: date-time */
+            end: string;
+            guestName: string;
+            guestEmail: string;
+            comment?: string;
+            /** Format: date-time */
+            createdAt: string;
         };
+        CreateBookingRequest: {
+            eventTypeId: string;
+            /** Format: date-time */
+            start: string;
+            guestName: string;
+            guestEmail: string;
+            comment?: string;
+        };
+        CreateEventTypeRequest: {
+            id: string;
+            title: string;
+            description: string;
+            /** Format: int32 */
+            durationMinutes: number;
+        };
+        /** @description Тип встречи, который создаёт владелец. */
+        EventType: {
+            /** @description Slug, заданный владельцем. */
+            id: string;
+            title: string;
+            description: string;
+            /**
+             * Format: int32
+             * @description Длительность в минутах, 15–240, кратно 15.
+             */
+            durationMinutes: number;
+        };
+        EventTypeExistsProblem: {
+            /** @enum {string} */
+            code: "event_type_exists";
+        } & WithRequired<components["schemas"]["ProblemDetails"], "code">;
+        EventTypeNotFoundProblem: {
+            /** @enum {string} */
+            code: "event_type_not_found";
+        } & WithRequired<components["schemas"]["ProblemDetails"], "code">;
+        /** @description Тело ошибки в формате ProblemDetails. */
+        ProblemDetails: {
+            type: string;
+            title: string;
+            /** Format: int32 */
+            status: number;
+            detail?: string;
+            code: string;
+            errors?: {
+                [key: string]: string[];
+            };
+        };
+        /** @description Свободный слот: начало и конец в поясе владельца. */
+        Slot: {
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+        };
+        SlotDay: {
+            /**
+             * Format: date
+             * @description Календарная дата в поясе владельца.
+             */
+            date: string;
+            slots: components["schemas"]["Slot"][];
+        };
+        SlotNotAvailableProblem: {
+            /** @enum {string} */
+            code: "slot_not_available";
+        } & WithRequired<components["schemas"]["ProblemDetails"], "code">;
+        SlotTakenProblem: {
+            /** @enum {string} */
+            code: "slot_taken";
+        } & WithRequired<components["schemas"]["ProblemDetails"], "code">;
+        /** @description Окно записи на 14 дней со свободными слотами. */
+        SlotWindow: {
+            /** @description IANA-пояс, в котором заданы рабочие часы. */
+            timeZone: string;
+            /** Format: date */
+            windowStart: string;
+            /** Format: date */
+            windowEnd: string;
+            /** Format: int32 */
+            stepMinutes: number;
+            days: components["schemas"]["SlotDay"][];
+        };
+        ValidationProblem: {
+            /** @enum {string} */
+            code: "validation_failed";
+        } & WithRequired<components["schemas"]["ProblemDetails"], "code">;
     };
     responses: never;
     parameters: never;
@@ -42,7 +171,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    Calendar_listSlots: {
+    Bookings_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -57,9 +186,156 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CallSlot"][];
+                    "application/json": components["schemas"]["Booking"][];
+                };
+            };
+        };
+    };
+    Bookings_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingRequest"];
+            };
+        };
+        responses: {
+            /** @description Успешное создание: 201 и созданный ресурс. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Booking"];
+                };
+            };
+            /** @description The server could not understand the request due to invalid syntax. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"] | components["schemas"]["SlotNotAvailableProblem"];
+                };
+            };
+            /** @description The server cannot find the requested resource. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["EventTypeNotFoundProblem"];
+                };
+            };
+            /** @description The request conflicts with the current state of the server. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["SlotTakenProblem"];
+                };
+            };
+        };
+    };
+    EventTypes_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventType"][];
+                };
+            };
+        };
+    };
+    EventTypes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Успешное создание: 201 и созданный ресурс. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventType"];
+                };
+            };
+            /** @description The server could not understand the request due to invalid syntax. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            /** @description The request conflicts with the current state of the server. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["EventTypeExistsProblem"];
+                };
+            };
+        };
+    };
+    EventTypes_slots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventTypeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request has succeeded. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlotWindow"];
+                };
+            };
+            /** @description The server cannot find the requested resource. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["EventTypeNotFoundProblem"];
                 };
             };
         };
     };
 }
+type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};
