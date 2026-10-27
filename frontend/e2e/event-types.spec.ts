@@ -4,21 +4,22 @@ test('владелец создаёт тип встречи, гость види
   page,
 }) => {
   const id = `intro-call-${Date.now()}`
+  const title = `Знакомство ${id}`
 
   await page.goto('/admin')
   await page.getByLabel('Id (slug)').fill(id)
-  await page.getByLabel('Название').fill('Знакомство')
+  await page.getByLabel('Название').fill(title)
   await page.getByLabel('Описание').fill('Короткий звонок')
   await page.getByLabel('Длительность, минут').fill('30')
   await page.getByRole('button', { name: 'Создать' }).click()
 
   // Тип появился в списке админки.
-  await expect(page.getByText(id)).toBeVisible()
+  await expect(page.getByRole('listitem').filter({ hasText: id })).toBeVisible()
 
   await page.getByRole('link', { name: 'Записаться' }).click()
 
   // Гость видит его в каталоге.
-  await expect(page.getByText('Знакомство')).toBeVisible()
-  await expect(page.getByText('Короткий звонок')).toBeVisible()
-  await expect(page.getByText('30 минут')).toBeVisible()
+  const card = page.getByRole('listitem').filter({ hasText: title })
+  await expect(card).toContainText('Короткий звонок')
+  await expect(card).toContainText('30 минут')
 })

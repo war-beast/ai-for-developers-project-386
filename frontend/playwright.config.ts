@@ -8,6 +8,8 @@ const repoRoot = path.resolve(frontendDir, '..')
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
+  // Один бекенд в памяти на весь прогон: параллельные файлы занимали бы слоты друг друга.
+  workers: 1,
   reporter: 'list',
   use: {
     baseURL: 'http://127.0.0.1:5173',

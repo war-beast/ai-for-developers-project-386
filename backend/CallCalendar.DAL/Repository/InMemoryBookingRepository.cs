@@ -23,8 +23,8 @@ public sealed class InMemoryBookingRepository : IBookingRepository
     {
         lock (_lock)
         {
-            // Полуинтервалы: запись сразу после окончания предыдущей пересечением не считается.
-            if (_bookings.Exists(existing => booking.Start < existing.End && existing.Start < booking.End))
+            if (_bookings.Exists(existing => BookingInterval.Overlaps(
+                    booking.Start, booking.End, existing.Start, existing.End)))
             {
                 return false;
             }

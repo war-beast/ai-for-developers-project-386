@@ -12,7 +12,6 @@ public sealed class BookingService(
     OwnerOptions options,
     TimeProvider timeProvider) : IBookingService
 {
-    private const int MaxGuestNameLength = 100;
     private const int MaxGuestEmailLength = 254;
     private const int MaxCommentLength = 500;
 
@@ -49,26 +48,29 @@ public sealed class BookingService(
         };
 
         return bookingRepository.TryAdd(entity)
-            ? CreateBookingResult.Success(ToModel(entity))
+            ? CreateBookingResult.Success(ToModel(entity, eventType.Title))
             : CreateBookingResult.SlotAlreadyTaken();
     }
 
     public IReadOnlyList<Booking> GetUpcoming()
     {
         var now = timeProvider.GetUtcNow();
+        var titles = eventTypeRepository
+            .GetAll()
+            .ToDictionary(type => type.Id, type => type.Title);
 
         return bookingRepository.GetAll()
             .Where(booking => booking.End > now)
             .OrderBy(booking => booking.Start)
-            .Select(ToModel)
+            .Select(booking => ToModel(booking, titles.GetValueOrDefault(booking.EventTypeId)))
             .ToList();
     }
 
-    private Booking ToModel(BookingEntity entity) =>
+    private static Booking ToModel(BookingEntity entity, string? eventTypeTitle) =>
         new(
             entity.Id,
             entity.EventTypeId,
-            eventTypeRepository.GetById(entity.EventTypeId)?.Title ?? entity.EventTypeId,
+            eventTypeTitle ?? entity.EventTypeId,
             entity.Start,
             entity.End,
             entity.GuestName,
@@ -94,10 +96,6 @@ public sealed class BookingService(
         if (guestName.Length == 0)
         {
             errors["guestName"] = ["Имя обязательно."];
-        }
-        else if (guestName.Length > MaxGuestNameLength)
-        {
-            errors["guestName"] = [$"Имя не длиннее {MaxGuestNameLength} символов."];
         }
 
         var guestEmail = command.GuestEmail?.Trim() ?? string.Empty;

@@ -28,41 +28,40 @@ fail() {
   exit 1
 }
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types")
-[ "${status}" = "200" ] || fail "GET /api/event-types returned ${status}"
+# expect_status <expected> <description> <method> <path> [json-body]
+expect_status() {
+  local expected="$1" description="$2" method="$3" path="$4" data="${5:-}"
+  local args=(-sS -o /dev/null -w '%{http_code}' -X "${method}" "${URL}${path}")
+  if [ -n "${data}" ]; then
+    args+=(-H 'Content-Type: application/json' --data "${data}")
+  fi
+
+  local status
+  status=$(curl "${args[@]}")
+  [ "${status}" = "${expected}" ] || fail "${description} returned ${status}, expected ${expected}"
+}
+
+expect_status 200 "GET /api/event-types" GET /api/event-types
 
 slug="smoke-$(date +%s)"
 body="{\"id\":\"${slug}\",\"title\":\"Smoke\",\"description\":\"Smoke check\",\"durationMinutes\":30}"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/event-types" \
-  -H 'Content-Type: application/json' \
-  --data "${body}")
-[ "${status}" = "201" ] || fail "POST /api/event-types returned ${status}, expected 201"
-
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/event-types" \
-  -H 'Content-Type: application/json' \
-  --data "${body}")
-[ "${status}" = "409" ] || fail "duplicate POST returned ${status}, expected 409"
-
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/event-types" \
-  -H 'Content-Type: application/json' \
-  --data '{"id":"Bad Slug","title":"","description":"","durationMinutes":20}')
-[ "${status}" = "400" ] || fail "invalid POST returned ${status}, expected 400"
+expect_status 201 "POST /api/event-types" POST /api/event-types "${body}"
+expect_status 409 "duplicate POST /api/event-types" POST /api/event-types "${body}"
+expect_status 400 \
+  "invalid POST /api/event-types" \
+  POST /api/event-types \
+  '{"id":"Bad Slug","title":"","description":"","durationMinutes":20}'
 
 curl -fsS "${URL}/api/event-types" | grep -q "\"${slug}\"" \
   || fail "created type ${slug} is missing from GET /api/event-types"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types/${slug}/slots")
-[ "${status}" = "200" ] || fail "GET slots returned ${status}, expected 200"
+expect_status 200 "GET slots" GET "/api/event-types/${slug}/slots"
 
 curl -fsS "${URL}/api/event-types/${slug}/slots" | grep -q '"timeZone"' \
   || fail "slots response lacks timeZone"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/event-types/missing/slots")
-[ "${status}" = "404" ] || fail "unknown type slots returned ${status}, expected 404"
+expect_status 404 "unknown type slots" GET /api/event-types/missing/slots
 
 start=$(curl -fsS "${URL}/api/event-types/${slug}/slots" \
   | grep -o '"start":"[^"]*"' | head -n 1 | cut -d'"' -f4)
@@ -70,32 +69,24 @@ start=$(curl -fsS "${URL}/api/event-types/${slug}/slots" \
 
 booking="{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/bookings" \
-  -H 'Content-Type: application/json' \
-  --data "${booking}")
-[ "${status}" = "201" ] || fail "POST /api/bookings returned ${status}, expected 201"
-
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/bookings" \
-  -H 'Content-Type: application/json' \
-  --data "${booking}")
-[ "${status}" = "409" ] || fail "duplicate booking returned ${status}, expected 409"
-
-status=$(curl -sS -o /dev/null -w '%{http_code}' "${URL}/api/bookings")
-[ "${status}" = "200" ] || fail "GET /api/bookings returned ${status}, expected 200"
+expect_status 201 "POST /api/bookings" POST /api/bookings "${booking}"
+expect_status 409 "duplicate POST /api/bookings" POST /api/bookings "${booking}"
+expect_status 200 "GET /api/bookings" GET /api/bookings
 
 curl -fsS "${URL}/api/bookings" | grep -q "\"start\":\"${start}\"" \
   || fail "created booking is missing from GET /api/bookings"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/bookings" \
-  -H 'Content-Type: application/json' \
-  --data "{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"\",\"guestEmail\":\"not-an-email\"}")
-[ "${status}" = "400" ] || fail "invalid booking returned ${status}, expected 400"
+expect_status 400 \
+  "invalid POST /api/bookings" \
+  POST /api/bookings \
+  "{\"eventTypeId\":\"${slug}\",\"start\":\"${start}\",\"guestName\":\"\",\"guestEmail\":\"not-an-email\"}"
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' \
-  -X POST "${URL}/api/bookings" \
-  -H 'Content-Type: application/json' \
-  --data "{\"eventTypeId\":\"missing\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}")
-[ "${status}" = "404" ] || fail "unknown type booking returned ${status}, expected 404"
+expect_status 404 \
+  "unknown type booking" \
+  POST /api/bookings \
+  "{\"eventTypeId\":\"missing\",\"start\":\"${start}\",\"guestName\":\"Smoke\",\"guestEmail\":\"smoke@example.com\"}"
+
+expect_status 400 \
+  "malformed POST /api/bookings" \
+  POST /api/bookings \
+  '{"eventTypeId":"smoke","start":42,"guestName":"Smoke","guestEmail":"smoke@example.com"}'

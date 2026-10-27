@@ -1,3 +1,6 @@
+/** Пояс владельца: время везде показывается с этой подписью. */
+export const OWNER_TIME_ZONE = 'Europe/Moscow'
+
 const months = [
   'янв',
   'фев',
@@ -13,17 +16,19 @@ const months = [
   'дек',
 ]
 
-const weekdays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
-
-/** Подпись дня в ленте: «ср, 28 окт». */
+/** Подпись дня: «3 ноя». */
 export function formatDayLabel(date: string) {
-  const weekday = weekdays[new Date(`${date}T12:00:00Z`).getUTCDay()] ?? ''
   const [, month, day] = date.split('-')
 
-  return `${weekday}, ${Number(day)} ${months[Number(month) - 1] ?? ''}`
+  return `${Number(day)} ${months[Number(month) - 1] ?? ''}`
 }
 
 /** Время слота: бекенд уже отдаёт его в поясе владельца. */
 export function formatSlotTime(start: string) {
   return start.slice(11, 16)
+}
+
+/** Дата и время записи: «3 ноя, 10:00». */
+export function formatDateTime(start: string) {
+  return `${formatDayLabel(start.slice(0, 10))}, ${formatSlotTime(start)}`
 }

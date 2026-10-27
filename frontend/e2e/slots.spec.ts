@@ -37,10 +37,10 @@ test('гость открывает тип, выбирает день и вид�
     }
   }
 
-  await expect(slots.getByRole('button', { name: '09:00' })).toBeVisible()
+  // Слоты других сценариев уже могут занимать ранние часы, поэтому берём любой.
+  const slot = slots.getByRole('button').first()
+  await expect(slot).toBeVisible()
 
-  await slots.getByRole('button', { name: '09:00' }).click()
-  await expect(
-    page.getByRole('button', { name: '09:00' }),
-  ).toHaveAttribute('aria-pressed', 'true')
+  await slot.click()
+  await expect(slot).toHaveAttribute('aria-pressed', 'true')
 })

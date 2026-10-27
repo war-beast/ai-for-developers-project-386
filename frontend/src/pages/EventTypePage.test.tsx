@@ -173,21 +173,25 @@ describe('EventTypePage', () => {
 
     expect(await screen.findByText('Вы записаны')).toBeTruthy()
     expect(screen.getByText(/Знакомство/)).toBeTruthy()
-    expect(screen.getByText(/ср, 28 окт, 09:00/)).toBeTruthy()
+    expect(screen.getByText(/28 окт, 09:00/)).toBeTruthy()
     expect(screen.getByText(/guest@example.com/)).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Записаться ещё' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'На главную' })).toBeTruthy()
   })
 
-  it('keeps guest data and refreshes slots when the slot is taken', async () => {
-    const slot = {
+  it('clears the taken slot, keeps guest data and blocks resubmit until another slot', async () => {
+    const taken = {
       start: '2026-10-28T09:00:00+03:00',
       end: '2026-10-28T09:30:00+03:00',
     }
-    mockWindow(buildWindow({ 0: [slot] }))
+    const free = {
+      start: '2026-10-28T10:00:00+03:00',
+      end: '2026-10-28T10:30:00+03:00',
+    }
+    mockWindow(buildWindow({ 0: [taken, free] }))
     vi.mocked(fetchSlots)
-      .mockResolvedValueOnce(buildWindow({ 0: [slot] }))
-      .mockResolvedValue(buildWindow({}))
+      .mockResolvedValueOnce(buildWindow({ 0: [taken, free] }))
+      .mockResolvedValue(buildWindow({ 0: [free] }))
     vi.mocked(createBooking).mockRejectedValue({
       type: 'about:blank',
       title: 'Время уже занято',
@@ -212,5 +216,16 @@ describe('EventTypePage', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: '09:00' })).toBeNull(),
     )
+
+    // Занятый слот снят с выбора: повторная отправка ждёт новый слот.
+    const submit = screen.getByRole('button', { name: 'Забронировать' })
+    expect((submit as HTMLButtonElement).disabled).toBe(true)
+
+    fireEvent.click(await screen.findByRole('button', { name: '10:00' }))
+
+    expect(
+      (screen.getByRole('button', { name: 'Забронировать' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false)
   })
 })
