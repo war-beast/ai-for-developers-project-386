@@ -1,3 +1,4 @@
+using CallCalendar.Api.ProblemResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -37,7 +38,7 @@ internal static class Problems
     public static ObjectResult ValidationFailed(ModelStateDictionary modelState) =>
         Result(
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ProblemCodes.ValidationFailed,
             "Поля заполнены неверно",
             "Проверьте выделенные поля.",
             modelState

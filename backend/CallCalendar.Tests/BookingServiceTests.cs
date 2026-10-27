@@ -3,6 +3,7 @@ using CallCalendar.BLL.Service;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Interface;
 using CallCalendar.DAL.Repository;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace CallCalendar.Tests;
@@ -214,7 +215,7 @@ public class BookingServiceTests
         var service = new BookingService(
             eventTypes.Object,
             _bookings,
-            new OwnerOptions(),
+            Options.Create(new OwnerOptions()),
             new FixedTimeProvider(Now));
 
         var booking = Assert.Single(service.GetUpcoming());
@@ -256,7 +257,7 @@ public class BookingServiceTests
         });
 
     private BookingService CreateService() =>
-        new(_eventTypes, _bookings, new OwnerOptions(), new FixedTimeProvider(Now));
+        new(_eventTypes, _bookings, Options.Create(new OwnerOptions()), new FixedTimeProvider(Now));
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

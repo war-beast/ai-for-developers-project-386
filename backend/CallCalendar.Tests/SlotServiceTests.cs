@@ -2,6 +2,7 @@ using CallCalendar.BLL.Model;
 using CallCalendar.BLL.Service;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Repository;
+using Microsoft.Extensions.Options;
 
 namespace CallCalendar.Tests;
 
@@ -121,7 +122,7 @@ public class SlotServiceTests
         });
 
     private SlotService CreateService() =>
-        new(_eventTypes, _bookings, new OwnerOptions(), new FixedTimeProvider(Now));
+        new(_eventTypes, _bookings, Options.Create(new OwnerOptions()), new FixedTimeProvider(Now));
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

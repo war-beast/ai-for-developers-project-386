@@ -1,3 +1,4 @@
+using CallCalendar.Api.ProblemResults;
 using CallCalendar.BLL.Interface;
 using CallCalendar.BLL.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,8 @@ namespace CallCalendar.Api;
 [Route("api/event-types")]
 public sealed class EventTypesController(
     IEventTypeService eventTypeService,
-    ISlotService slotService) : ControllerBase
+    ISlotService slotService,
+    IProblemResultFactory problemFactory) : ControllerBase
 {
     /// <summary>Список типов встреч в порядке создания.</summary>
     [HttpGet]
@@ -26,19 +28,10 @@ public sealed class EventTypesController(
 
         if (result.SlugTaken)
         {
-            return Problems.Result(
-                StatusCodes.Status409Conflict,
-                "event_type_exists",
-                "Тип встречи уже существует",
-                $"Тип встречи с id «{command.Id}» уже создан.");
+            return problemFactory.Create(ProblemCodes.EventTypeExists).GetProblemResult(command.Id);
         }
 
-        return Problems.Result(
-            StatusCodes.Status400BadRequest,
-            "validation_failed",
-            "Поля заполнены неверно",
-            "Проверьте выделенные поля.",
-            result.Errors);
+        return problemFactory.Create(ProblemCodes.ValidationFailed).GetProblemResult(errors: result.Errors);
     }
 
     /// <summary>Свободные слоты типа встречи на всё окно записи.</summary>
@@ -49,10 +42,6 @@ public sealed class EventTypesController(
 
         return result.Window is not null
             ? Ok(result.Window)
-            : Problems.Result(
-                StatusCodes.Status404NotFound,
-                "event_type_not_found",
-                "Тип встречи не найден",
-                $"Тип встречи с id «{eventTypeId}» не найден.");
+            : problemFactory.Create(ProblemCodes.EventTypeNotFound).GetProblemResult(eventTypeId);
     }
 }

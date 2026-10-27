@@ -3,17 +3,20 @@ using CallCalendar.BLL.Interface;
 using CallCalendar.BLL.Model;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Interface;
+using Microsoft.Extensions.Options;
 
 namespace CallCalendar.BLL.Service;
 
 public sealed class BookingService(
     IEventTypeRepository eventTypeRepository,
     IBookingRepository bookingRepository,
-    OwnerOptions options,
+    IOptions<OwnerOptions> ownerOptions,
     TimeProvider timeProvider) : IBookingService
 {
     private const int MaxGuestEmailLength = 254;
     private const int MaxCommentLength = 500;
+
+    private readonly OwnerOptions options = ownerOptions.Value;
 
     public CreateBookingResult Create(CreateBookingCommand command)
     {
