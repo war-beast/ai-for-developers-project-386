@@ -19,6 +19,14 @@ public sealed class InMemoryEventTypeRepository : IEventTypeRepository
         }
     }
 
+    public EventTypeEntity? GetById(string id)
+    {
+        lock (_lock)
+        {
+            return _eventTypes.Find(eventType => eventType.Id == id);
+        }
+    }
+
     public bool TryAdd(EventTypeEntity eventType)
     {
         lock (_lock)

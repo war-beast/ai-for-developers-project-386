@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 
 import { fetchEventTypes } from '@/api/event-types'
 import {
@@ -34,7 +35,14 @@ export function BookPage() {
             <li key={eventType.id}>
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>{eventType.title}</CardTitle>
+                  <CardTitle>
+                    <Link
+                      to={`/book/${eventType.id}`}
+                      className="hover:underline"
+                    >
+                      {eventType.title}
+                    </Link>
+                  </CardTitle>
                   <CardDescription>{eventType.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="text-muted-foreground">
