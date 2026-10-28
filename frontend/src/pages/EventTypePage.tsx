@@ -207,7 +207,10 @@ export function EventTypePage() {
               В этот день свободных слотов нет
             </p>
           ) : (
-            <ul aria-label="Слоты" className="flex flex-col gap-2">
+            <ul
+              aria-label="Слоты"
+              className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto p-1"
+            >
               {activeDay?.slots.map((slot) => (
                 <li key={slot.start}>
                   <Button
