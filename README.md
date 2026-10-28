@@ -116,9 +116,20 @@ MCP подключён в `opencode.json` как remote-сервер `render` с
 4. Проверить `opencode mcp list` — сервер `render` в статусе connected.
 5. Дальше деплой, логи и адрес сервиса доступны инструментами MCP.
 
-Если OAuth недоступен, используется API-ключ Render в заголовке
-`Authorization: Bearer $RENDER_API_KEY`; ключ передаётся через переменную
-окружения и в репозиторий не попадает.
+Если OAuth недоступен (например, `api.render.com` закрыт сетью), используется
+API-ключ Render. В конфигурации он подставляется из переменной окружения, а не
+хранится в файле:
+
+```jsonc
+"render": {
+  "type": "remote",
+  "url": "https://mcp.render.com/mcp",
+  "headers": { "Authorization": "Bearer {env:RENDER_API_KEY}" }
+}
+```
+
+Ключ создаётся в Render Dashboard → **Account Settings** → **API Keys** и
+передаётся только через `RENDER_API_KEY`.
 
 ### Ограничение хранения данных
 
