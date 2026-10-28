@@ -101,8 +101,12 @@ docker run --rm -e PORT=8080 -p 8080:8080 callcalendar
 3. После первого деплоя Render выдаст публичный адрес.
 4. Открыть https://callcalendar-615k.onrender.com/health — должно вернуться `ok`.
 
-Работающий сервис: https://callcalendar-615k.onrender.com (собран из ветки
-`feat/deploy-render`; после мержа PR переключите ветку сервиса на `dev`).
+Работающий сервис: https://callcalendar-615k.onrender.com.
+
+После мержа PR в `dev` деплой запускает workflow
+`.github/workflows/render-deploy.yml`: он переключает ветку сервиса на `dev` и
+через Render API запускает сборку образа. Для этого в секретах репозитория
+должен быть `RENDER_API_KEY` (Settings → Secrets and variables → Actions).
 
 ### MCP-сервер Render
 
