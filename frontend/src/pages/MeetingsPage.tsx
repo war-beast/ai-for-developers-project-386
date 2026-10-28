@@ -24,20 +24,27 @@ export function MeetingsPage() {
         <p className="text-muted-foreground">Предстоящих встреч пока нет</p>
       ) : (
         <ul aria-label="Предстоящие встречи" className="grid gap-2">
-          {bookings.map((booking) => (
-            <li
-              key={booking.id}
-              className="border border-border bg-card px-4 py-3 text-sm"
-            >
-              <p className="font-medium">
-                {formatDateTime(booking.start)} — {booking.eventTypeTitle}
-              </p>
-              <p className="text-muted-foreground">
-                {booking.guestName} — {booking.guestEmail}
-                {booking.comment ? ` — ${booking.comment}` : ''}
-              </p>
-            </li>
-          ))}
+          {bookings.map((booking) => {
+            const minutes = Math.round(
+              (Date.parse(booking.end) - Date.parse(booking.start)) / 60_000,
+            )
+
+            return (
+              <li
+                key={booking.id}
+                className="border border-border bg-card px-4 py-3 text-sm"
+              >
+                <p className="font-medium">
+                  {formatDateTime(booking.start)} — {booking.eventTypeTitle} (
+                  {minutes} мин)
+                </p>
+                <p className="text-muted-foreground">
+                  {booking.guestName} — {booking.guestEmail}
+                  {booking.comment ? ` — ${booking.comment}` : ''}
+                </p>
+              </li>
+            )
+          })}
         </ul>
       )}
     </main>
