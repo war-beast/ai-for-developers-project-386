@@ -109,6 +109,23 @@ describe('EventTypePage', () => {
     expect(await screen.findByText('11:00')).toBeTruthy()
   })
 
+  it('раскладывает дни календарём от понедельника и выделяет выходные', async () => {
+    mockWindow(buildWindow({}))
+
+    renderPage()
+
+    const ribbon = await screen.findByRole('list', { name: 'Дни окна записи' })
+    const monday = within(ribbon).getByRole('button', { name: '2 ноя' })
+    const saturday = within(ribbon).getByRole('button', { name: '7 ноя' })
+
+    // Окно начинается в среду 28 октября: две пустые клетки держат столбцы Пн и Вт.
+    expect(ribbon.children[2]!.textContent).toBe('28 окт')
+    expect(within(ribbon).getAllByRole('button')).toHaveLength(14)
+    expect(monday.getAttribute('data-variant')).toBe('outline')
+    expect(saturday.getAttribute('data-variant')).toBe('secondary')
+    expect(screen.getByText('Пн')).toBeTruthy()
+  })
+
   it('marks the clicked slot as selected', async () => {
     mockWindow(
       buildWindow({

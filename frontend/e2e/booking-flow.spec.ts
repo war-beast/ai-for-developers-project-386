@@ -11,13 +11,18 @@ test('владелец создаёт тип, гость бронирует сл
   await page.getByLabel('Id (slug)').fill(id)
   await page.getByLabel('Название').fill('Полный сценарий')
   await page.getByLabel('Описание').fill('Сквозная проверка')
-  await page.getByLabel('Длительность, минут').fill('30')
+  await page.getByLabel('Длительность, минут').selectOption('30')
   await page.getByRole('button', { name: 'Создать' }).click()
   await expect(page.getByText(id)).toBeVisible()
 
   // Гость находит тип в каталоге и открывает его.
-  await page.getByRole('link', { name: 'Записаться' }).click()
-  await page.getByRole('link', { name: 'Полный сценарий' }).click()
+  await page.goto('/book')
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Полный сценарий' })
+    .first()
+    .getByRole('link', { name: 'Записаться' })
+    .click()
   await expect(
     page.getByRole('heading', { level: 1, name: 'Полный сценарий' }),
   ).toBeVisible()
