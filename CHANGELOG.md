@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/war-beast/ai-for-developers-project-386/compare/callcalendar-v1.1.0...callcalendar-v1.2.0) (2026-10-28)
+
+
+### Features
+
+* доработать вёрстку главной, админки и записи ([24896e8](https://github.com/war-beast/ai-for-developers-project-386/commit/24896e8aef151c8d4888370f3b037d0e02fa5f1c))
+* доработать вёрстку главной, админки и записи ([#36](https://github.com/war-beast/ai-for-developers-project-386/issues/36)) ([e04d44d](https://github.com/war-beast/ai-for-developers-project-386/commit/e04d44d5eb9c572887114f08e0151792d2b2c82a))
+* показывать длительность встречи в списке встреч ([#36](https://github.com/war-beast/ai-for-developers-project-386/issues/36)) ([af5deee](https://github.com/war-beast/ai-for-developers-project-386/commit/af5deeec962a3080d5e08ed34eddadcc1467fa4b))
+* показывать форму записи под календарём ([#36](https://github.com/war-beast/ai-for-developers-project-386/issues/36)) ([f142223](https://github.com/war-beast/ai-for-developers-project-386/commit/f1422230bb7263140a3b443bd4349128949a8d74))
+
+
+### Bug Fixes
+
+* прокручивать список свободных слотов ([#36](https://github.com/war-beast/ai-for-developers-project-386/issues/36)) ([3b77a22](https://github.com/war-beast/ai-for-developers-project-386/commit/3b77a22a2394f9aa653455e4cfe6b4bd6cd34d8c))
+
 ## [1.1.0](https://github.com/war-beast/ai-for-developers-project-386/compare/callcalendar-v1.0.0...callcalendar-v1.1.0) (2026-10-27)
 
 
