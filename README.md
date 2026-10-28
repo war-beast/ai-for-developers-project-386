@@ -10,6 +10,8 @@
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
+Публичная версия: https://callcalendar-615k.onrender.com
+
 ## Стек
 
 - Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (слой представления, REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
@@ -74,6 +76,71 @@ mise run check
 ```bash
 mise run e2e
 ```
+
+## Деплой
+
+### Docker
+
+```bash
+docker build -t callcalendar .
+docker run --rm -e PORT=8080 -p 8080:8080 callcalendar
+```
+
+Образ собирает React-фронтенд и кладёт его в `wwwroot`: UI и `/api` отдаются с
+одного origin. Приложение слушает `0.0.0.0:$PORT` (без `PORT` — стандартный
+порт ASP.NET Core, 8080), проверка живости — `GET /health`.
+
+### Render
+
+`render.yaml` создаёт web-сервис из `Dockerfile` с проверкой `/health`. Render
+передаёт `PORT` автоматически, дополнительных переменных окружения не нужно.
+
+1. Запушить изменения в GitHub.
+2. Render Dashboard → **New** → **Blueprint** → выбрать репозиторий и применить
+   `render.yaml`.
+3. После первого деплоя Render выдаст публичный адрес.
+4. Открыть https://callcalendar-615k.onrender.com/health — должно вернуться `ok`.
+
+Работающий сервис: https://callcalendar-615k.onrender.com.
+
+После мержа PR в `dev` деплой запускает workflow
+`.github/workflows/render-deploy.yml`: он переключает ветку сервиса на `dev` и
+через Render API запускает сборку образа. Для этого в секретах репозитория
+должен быть `RENDER_API_KEY` (Settings → Secrets and variables → Actions).
+
+### MCP-сервер Render
+
+MCP подключён в `opencode.json` как remote-сервер `render` с адресом
+`https://mcp.render.com/mcp`. Секретов в конфиге нет: авторизация идёт по OAuth,
+токен хранится в профиле OpenCode.
+
+1. Открыть OpenCode.
+2. Выполнить `/mcps`, выбрать `render` → **Sign in**.
+3. В браузере войти в Render и разрешить доступ.
+4. Проверить `opencode mcp list` — сервер `render` в статусе connected.
+5. Дальше деплой, логи и адрес сервиса доступны инструментами MCP.
+
+Если OAuth недоступен (например, `api.render.com` закрыт сетью), используется
+API-ключ Render. В конфигурации он подставляется из переменной окружения, а не
+хранится в файле:
+
+```jsonc
+"render": {
+  "type": "remote",
+  "url": "https://mcp.render.com/mcp",
+  "headers": { "Authorization": "Bearer {env:RENDER_API_KEY}" }
+}
+```
+
+Ключ создаётся в Render Dashboard → **Account Settings** → **API Keys** и
+передаётся только через `RENDER_API_KEY`.
+
+### Ограничение хранения данных
+
+Типы встреч и записи хранятся в памяти процесса, базы данных нет. Любой
+рестарт, редеплой или засыпание бесплатного инстанса Render стирает все данные.
+Публичная ссылка подходит для демонстрации, но не для реальных записей: для
+сохранения данных нужна внешняя БД.
 
 ## Документация
 

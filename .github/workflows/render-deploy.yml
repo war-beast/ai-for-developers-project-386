@@ -1,0 +1,33 @@
+name: deploy
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: render-deploy
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # shortcut: Render GitHub App не подключён к репозиторию, поэтому деплой
+      # запускаем из Actions; убрать, когда включим нативный auto-deploy Render.
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: srv-dbgvp7ss728c73cfpdcg
+        run: |
+          curl -fsS -X PATCH "https://api.render.com/v1/services/$SERVICE_ID" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"branch":"dev"}'
+          curl -fsS -X POST "https://api.render.com/v1/services/$SERVICE_ID/deploys" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
