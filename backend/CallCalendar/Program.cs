@@ -8,6 +8,13 @@ using CallCalendar.DAL.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Хостинг (Render) передаёт порт в PORT; локально работает порт по умолчанию.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 // Слой View бекенда — REST-контроллеры в api/. Пользовательский интерфейс живёт
 // в frontend/ (React SPA).
 builder.Services
@@ -29,8 +36,13 @@ builder.Services.AddTransient<IProblemResultFactory, ProblemResultFactory>();
 
 var app = builder.Build();
 
+// В Docker фронтенд собирается в wwwroot и отдаётся с того же origin, что API.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
 app.MapGet("/health", () => "ok");
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

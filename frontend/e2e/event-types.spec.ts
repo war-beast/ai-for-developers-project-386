@@ -10,13 +10,13 @@ test('владелец создаёт тип встречи, гость види
   await page.getByLabel('Id (slug)').fill(id)
   await page.getByLabel('Название').fill(title)
   await page.getByLabel('Описание').fill('Короткий звонок')
-  await page.getByLabel('Длительность, минут').fill('30')
+  await page.getByLabel('Длительность, минут').selectOption('30')
   await page.getByRole('button', { name: 'Создать' }).click()
 
   // Тип появился в списке админки.
   await expect(page.getByRole('listitem').filter({ hasText: id })).toBeVisible()
 
-  await page.getByRole('link', { name: 'Записаться' }).click()
+  await page.goto('/book')
 
   // Гость видит его в каталоге.
   const card = page.getByRole('listitem').filter({ hasText: title })

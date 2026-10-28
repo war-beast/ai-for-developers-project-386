@@ -12,7 +12,7 @@ export function MeetingsPage() {
   })
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-10">
       <h1 className="text-4xl font-light tracking-tight">Встречи</h1>
       <p className="text-sm text-muted-foreground">
         Предстоящие встречи всех типов · {OWNER_TIME_ZONE}
@@ -24,20 +24,27 @@ export function MeetingsPage() {
         <p className="text-muted-foreground">Предстоящих встреч пока нет</p>
       ) : (
         <ul aria-label="Предстоящие встречи" className="grid gap-2">
-          {bookings.map((booking) => (
-            <li
-              key={booking.id}
-              className="border border-border bg-card px-4 py-3 text-sm"
-            >
-              <p className="font-medium">
-                {formatDateTime(booking.start)} — {booking.eventTypeTitle}
-              </p>
-              <p className="text-muted-foreground">
-                {booking.guestName} — {booking.guestEmail}
-                {booking.comment ? ` — ${booking.comment}` : ''}
-              </p>
-            </li>
-          ))}
+          {bookings.map((booking) => {
+            const minutes = Math.round(
+              (Date.parse(booking.end) - Date.parse(booking.start)) / 60_000,
+            )
+
+            return (
+              <li
+                key={booking.id}
+                className="border border-border bg-card px-4 py-3 text-sm"
+              >
+                <p className="font-medium">
+                  {formatDateTime(booking.start)} — {booking.eventTypeTitle} (
+                  {minutes} мин)
+                </p>
+                <p className="text-muted-foreground">
+                  {booking.guestName} — {booking.guestEmail}
+                  {booking.comment ? ` — ${booking.comment}` : ''}
+                </p>
+              </li>
+            )
+          })}
         </ul>
       )}
     </main>

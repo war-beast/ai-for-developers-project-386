@@ -39,7 +39,7 @@ run = [
   "pnpm --dir frontend typecheck",
   "pnpm --dir frontend lint",
   "typos",
-  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml",
+  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml .github/workflows/render-deploy.yml",
 ]
 
 [tasks.openapi]
@@ -79,7 +79,7 @@ run = [
   "pnpm --dir frontend typecheck",
   "pnpm --dir frontend lint",
   "typos",
-  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml",
+  "jactionlint .github/workflows/check.yml .github/workflows/release-please.yml .github/workflows/render-deploy.yml",
   "dotnet test",
   "pnpm --dir frontend test",
   "mise run smoke-backend",
