@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 
 import { fetchEventTypes } from '@/api/event-types'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -17,7 +18,7 @@ export function BookPage() {
   })
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-10">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-10">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-light tracking-tight">Запись на звонок</h1>
         <p className="text-muted-foreground">
@@ -35,18 +36,16 @@ export function BookPage() {
             <li key={eventType.id}>
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>
-                    <Link
-                      to={`/book/${eventType.id}`}
-                      className="hover:underline"
-                    >
-                      {eventType.title}
-                    </Link>
-                  </CardTitle>
+                  <CardTitle>{eventType.title}</CardTitle>
                   <CardDescription>{eventType.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="text-muted-foreground">
-                  {eventType.durationMinutes} минут
+                <CardContent className="mt-auto flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">
+                    {eventType.durationMinutes} минут
+                  </span>
+                  <Button asChild size="sm">
+                    <Link to={`/book/${eventType.id}`}>Записаться</Link>
+                  </Button>
                 </CardContent>
               </Card>
             </li>

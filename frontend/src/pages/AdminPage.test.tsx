@@ -26,6 +26,19 @@ describe('AdminPage', () => {
     vi.mocked(api.POST).mockReset()
   })
 
+  it('предлагает предустановленные длительности', () => {
+    renderPage()
+
+    const duration = screen.getByLabelText('Длительность, минут')
+
+    expect(duration.tagName).toBe('SELECT')
+    expect(
+      Array.from((duration as HTMLSelectElement).options).map(
+        (option) => option.textContent,
+      ),
+    ).toEqual(['15 минут', '30 минут', '45 минут', '1 час'])
+  })
+
   it('shows field errors returned by the API next to the field', async () => {
     vi.mocked(api.POST).mockResolvedValue({
       error: {

@@ -11,7 +11,7 @@ type TextFieldProps = {
   onChange: (value: string) => void
 }
 
-const inputClassName =
+export const inputClassName =
   'h-9 w-full border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive'
 
 /** Поле формы с подписью и сообщениями об ошибках рядом с ним. */

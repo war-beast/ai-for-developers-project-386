@@ -55,11 +55,12 @@ describe('MeetingsPage', () => {
     const rows = within(list).getAllByRole('listitem')
     expect(rows).toHaveLength(2)
     expect(rows[0]!.textContent).toContain('28 окт, 09:00')
-    expect(rows[0]!.textContent).toContain('Знакомство')
+    expect(rows[0]!.textContent).toContain('Знакомство (30 мин)')
     expect(rows[0]!.textContent).toContain('Гость')
     expect(rows[0]!.textContent).toContain('guest@example.com')
     expect(rows[0]!.textContent).toContain('Перезвоните')
     expect(rows[1]!.textContent).toContain('29 окт, 11:00')
+    expect(rows[1]!.textContent).toContain('Час (60 мин)')
     expect(screen.getByText(/Europe\/Moscow/)).toBeTruthy()
   })
 

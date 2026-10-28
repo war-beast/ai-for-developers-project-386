@@ -37,15 +37,21 @@ test('главная рассказывает про сервис', () => {
   expect(screen.getByText(/ближайшие\s+14 дней/)).toBeTruthy()
 })
 
-test('панель навигации ведёт на каталог, админку и встречи', () => {
+test('панель навигации ведёт в админку и встречи', () => {
   renderAt('/')
 
   expect(screen.getByRole('link', { name: 'Календарь' }).getAttribute('href')).toBe('/')
-  expect(screen.getByRole('link', { name: 'Записаться' }).getAttribute('href')).toBe('/book')
   expect(screen.getByRole('link', { name: 'Админка' }).getAttribute('href')).toBe('/admin')
   expect(
     screen.getByRole('link', { name: 'Встречи' }).getAttribute('href'),
   ).toBe('/admin/meetings')
+})
+
+test('главная зовёт в каталог и перечисляет функции гостя', () => {
+  renderAt('/')
+
+  expect(screen.getByRole('link', { name: 'Записаться' }).getAttribute('href')).toBe('/book')
+  expect(screen.getByText('Выбрать тип встречи')).toBeTruthy()
 })
 
 test('страница записи показывает пустой каталог', async () => {

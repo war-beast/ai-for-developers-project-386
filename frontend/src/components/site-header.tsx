@@ -2,7 +2,6 @@ import { Calendar } from 'lucide-react'
 import { Link, NavLink } from 'react-router'
 
 const links = [
-  { to: '/book', label: 'Записаться', end: false },
   { to: '/admin', label: 'Админка', end: true },
   { to: '/admin/meetings', label: 'Встречи', end: false },
 ]
@@ -10,7 +9,7 @@ const links = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-primary text-primary-foreground">
-      <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4">
         <Link
           to="/"
           className="flex items-center gap-2 font-semibold tracking-wide"

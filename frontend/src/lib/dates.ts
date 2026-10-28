@@ -28,6 +28,11 @@ export function formatSlotTime(start: string) {
   return start.slice(11, 16)
 }
 
+/** Номер дня недели с понедельника: 0 — понедельник, 6 — воскресенье. */
+export function weekdayIndex(date: string) {
+  return (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7
+}
+
 /** Дата и время записи: «3 ноя, 10:00». */
 export function formatDateTime(start: string) {
   return `${formatDayLabel(start.slice(0, 10))}, ${formatSlotTime(start)}`
