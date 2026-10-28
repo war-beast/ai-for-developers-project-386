@@ -2,6 +2,7 @@ services:
   - type: web
     name: callcalendar
     runtime: docker
+    branch: dev
     plan: free
     healthCheckPath: /health
     autoDeploy: true

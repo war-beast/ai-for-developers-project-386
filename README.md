@@ -10,6 +10,8 @@
 Учебный проект Хекслета: https://ru.hexlet.io/programs/ai-for-developers
 Как это должно работать: https://files.hexlet.app/a/2ipc5m
 
+Публичная версия: https://callcalendar-615k.onrender.com
+
 ## Стек
 
 - Бекенд: ASP.NET Core 10 (MVC), солюшен `CallCalendar.slnx`: `backend/CallCalendar` (слой представления, REST `api/`), `CallCalendar.BLL` (бизнес-логика), `CallCalendar.DAL` (доступ к данным), `CallCalendar.Tests` (xUnit.v3 + Moq)
@@ -97,7 +99,10 @@ docker run --rm -e PORT=8080 -p 8080:8080 callcalendar
 2. Render Dashboard → **New** → **Blueprint** → выбрать репозиторий и применить
    `render.yaml`.
 3. После первого деплоя Render выдаст публичный адрес.
-4. Открыть `<адрес>/health` — должно вернуться `ok`.
+4. Открыть https://callcalendar-615k.onrender.com/health — должно вернуться `ok`.
+
+Работающий сервис: https://callcalendar-615k.onrender.com (собран из ветки
+`feat/deploy-render`; после мержа PR переключите ветку сервиса на `dev`).
 
 ### MCP-сервер Render
 
