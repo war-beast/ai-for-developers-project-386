@@ -1,79 +1,16 @@
-# CallCalendar — ASP.NET Core MVC + React/Vite, 3-слойная архитектура
+# CallCalendar — указатель для агентов
 
-## Структура солюшена
+Проект: ASP.NET Core MVC (.NET 10) + React/Vite, 3-слойная архитектура.
+Правила кода и процесса живут в отдельных файлах и подгружаются OpenCode
+автоматически через `instructions` в `opencode.json`:
 
-- `backend/CallCalendar` — слой представления (ASP.NET Core MVC, .NET 10): REST-контроллеры `api/` — это слой View бекенда; пользовательский интерфейс — React SPA в `frontend/`
-- `backend/CallCalendar.BLL` — слой бизнес-логики (classlib): папки `Model/`, `Interface/`, `Service/`
-- `backend/CallCalendar.DAL` — слой доступа к данным (classlib): папки `Enums/`, `Entity/`, `Interface/`, `Repository/`
-- `backend/CallCalendar.Tests` — тестовый проект xUnit.v3 + Moq
+- [CODING_STANDARDS.md](./CODING_STANDARDS.md) — структура солюшена, форматирование C#,
+  контракт API и правила фронтенда. Читать перед любой правкой `backend/`, `api/`, `frontend/`.
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — окружение, `mise run check`, Conventional Commits,
+  ветки и PR. Читать перед коммитом или PR.
 
-Структурные папки BLL и DAL нельзя удалять; каждая из них содержит файл-плейсхолдер
-`.gitkeep`, чтобы отображаться в Solution Explorer. Новые классы кладутся в
-соответствующую папку по смыслу.
-
-Зависимости строго односторонние: `CallCalendar -> CallCalendar.BLL -> CallCalendar.DAL`.
-`CallCalendar.Tests` ссылается на BLL, а для интеграционных тестов API — на `CallCalendar`.
-
-## Форматирование C#
-
-Если в одной строке больше одного вызова метода после точки, то начиная со
-второго каждый вызов переносится на новую строку; точка остаётся в начале
-строки, отступ — +4 пробела от начала выражения:
-
-```csharp
-problemFactory.Create(ProblemCodes.SlotTaken)
-    .GetProblemResult();
-```
-
-Правило действует для всего C#-кода в `backend/`, включая тесты.
-`dotnet format` его не проверяет — соблюдаем вручную.
-
-## Контракт API и фронтенд
-
-- Контракт описывается в **TypeSpec**: `api/main.tsp` (+ `api/tspconfig.yaml`).
-- Генерируемые файлы (правятся только генератором, вручную — никогда):
-  - `api/openapi.yaml` — OpenAPI из TypeSpec;
-  - `frontend/src/api/schema.d.ts` — типы клиентского SDK.
-- Обе генерации выполняет одна команда `mise run sdk` (`openapi` → `sdk`).
-  `mise run check` повторяет генерацию и падает, если файлы разошлись с коммитом.
-- Запросы к API идут только через `openapi-fetch` и типы из `schema.d.ts`.
-- Серверный код по контракту пишется вручную: подходящего генератора для
-  ASP.NET Core MVC нет (`openapi-generator` даёт заготовки контроллеров,
-  несовместимые с 3-слойной архитектурой).
-- Фронтенд: `frontend/` — Vite + React + TypeScript + shadcn/ui, состояние через TanStack Query.
-
-## Окружение
-
-- Все версии инструментов зафиксированы в `mise.toml`; зависимости ставит `mise install`.
-- Единая команда проверок: `mise run check` (сборка + линтеры + типы + тесты +
-  дымовая проверка API + браузерный сценарий Playwright на реальном сервере).
-  Она же вызывается из CI.
-- Фоновые серверы (бекенд, Vite) описаны как демоны mise (`[daemons]` в mise.toml):
-  `mise daemons start backend frontend`, `mise daemons logs backend`, `mise daemons stop ...`.
-- Гит-хуки настроены через hk (`hk.pkl`), включая проверку commit-msg.
-
-## Conventional Commits (обязательно)
-
-Текст каждого коммита начинается с префикса: `feat:` — новая функция,
-`fix:` — исправление бага; остальные типы (`chore:`, `docs:`, `refactor:`, `test:`)
-используются по смыслу. Каждый коммит реализации заканчивается ссылкой на тикет
-(`(#20)`), например: `feat: забронировать свободный слот (#20)`. Проверка
-префикса выполняется хуком commit-msg (hk); ссылку на тикет проверяем на ревью.
-
-Версию и `CHANGELOG.md` двигают только `feat:`, `fix:` и breaking change;
-`chore:`/`docs:`/`refactor:`/`test:` в релиз не попадают. Поэтому меняется
-поведение пользователя или контракт API — `feat`/`fix`, только сборка, CI,
-тесты или рефакторинг без изменения поведения — остальные типы.
-`CHANGELOG.md` и `.release-please-manifest.json` генерирует release-please
-через Release PR в `dev` — руками не правим, Release PR нужно смержить.
-
-## Ветки и PR
-
-- Каждую новую задачу начинаем в новой ветке: `feat/<краткое-имя>` (git не
-  допускает `:` в именах веток, поэтому префикс `feat:` пишется как `feat/`).
-- Ветки `feat/` создаются только из `dev`.
-- После завершения задачи — коммитим изменения (Conventional Commits) и делаем
-  PR в ветку `dev` на GitHub.
+Новые соглашения по коду пишем в `CODING_STANDARDS.md`, по процессу —
+в `CONTRIBUTING.md`. `AGENTS.md` не пополняется.
 
 ## Уточнение при неоднозначности
 
