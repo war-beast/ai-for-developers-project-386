@@ -194,6 +194,64 @@ export function EventTypePage() {
               <li key={`blank-after-${index}`} />
             ))}
           </ul>
+
+          {selectedSlot || slotTaken ? (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-medium">
+                {selectedSlot
+                  ? `Запись на ${formatDateTime(selectedSlot)}`
+                  : 'Выберите другое время'}
+              </h2>
+              <form className="grid gap-4" onSubmit={handleSubmit}>
+                <TextField
+                  id="booking-guestName"
+                  label="Имя"
+                  value={guestName}
+                  errors={fieldErrors.guestName}
+                  onChange={setGuestName}
+                />
+                <TextField
+                  id="booking-guestEmail"
+                  label="Email"
+                  type="email"
+                  value={guestEmail}
+                  errors={fieldErrors.guestEmail}
+                  onChange={setGuestEmail}
+                />
+                <TextField
+                  id="booking-comment"
+                  label="Комментарий"
+                  value={comment}
+                  errors={fieldErrors.comment}
+                  rows={3}
+                  onChange={setComment}
+                />
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={create.isPending || !selectedSlot}
+                    >
+                      Забронировать
+                    </Button>
+                    {create.isError &&
+                      Object.keys(fieldErrors).length === 0 &&
+                      !slotTaken ? (
+                      <p className="text-sm text-destructive">
+                        Не удалось забронировать слот.
+                      </p>
+                    ) : null}
+                  </div>
+                  {slotTaken ? (
+                    <p role="alert" className="text-sm text-destructive">
+                      Это время уже занято
+                    </p>
+                  ) : null}
+                </div>
+              </form>
+            </div>
+          ) : null}
         </section>
 
         <section className="flex flex-col gap-3">
@@ -231,62 +289,6 @@ export function EventTypePage() {
           )}
         </section>
       </div>
-
-      {selectedSlot || slotTaken ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-medium">
-            {selectedSlot
-              ? `Запись на ${formatDateTime(selectedSlot)}`
-              : 'Выберите другое время'}
-          </h2>
-          <form className="grid gap-4" onSubmit={handleSubmit}>
-            <TextField
-              id="booking-guestName"
-              label="Имя"
-              value={guestName}
-              errors={fieldErrors.guestName}
-              onChange={setGuestName}
-            />
-            <TextField
-              id="booking-guestEmail"
-              label="Email"
-              type="email"
-              value={guestEmail}
-              errors={fieldErrors.guestEmail}
-              onChange={setGuestEmail}
-            />
-            <TextField
-              id="booking-comment"
-              label="Комментарий"
-              value={comment}
-              errors={fieldErrors.comment}
-              rows={3}
-              onChange={setComment}
-            />
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={create.isPending || !selectedSlot}
-                >
-                  Забронировать
-                </Button>
-                {create.isError && Object.keys(fieldErrors).length === 0 && !slotTaken ? (
-                  <p className="text-sm text-destructive">
-                    Не удалось забронировать слот.
-                  </p>
-                ) : null}
-              </div>
-              {slotTaken ? (
-                <p role="alert" className="text-sm text-destructive">
-                  Это время уже занято
-                </p>
-              ) : null}
-            </div>
-          </form>
-        </section>
-      ) : null}
     </main>
   )
 }
