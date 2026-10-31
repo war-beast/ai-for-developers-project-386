@@ -223,7 +223,7 @@ public class BookingServiceTests
         var service = new BookingService(
             eventTypes.Object,
             _bookings,
-            Options.Create(new OwnerOptions()),
+            CreateEngine(),
             new FixedTimeProvider(Now));
 
         var booking = Assert.Single(service.GetUpcoming());
@@ -266,6 +266,9 @@ public class BookingServiceTests
         });
 
     private BookingService CreateService() =>
+        new(_eventTypes, _bookings, CreateEngine(), new FixedTimeProvider(Now));
+
+    private SlotEngine CreateEngine() =>
         new(_eventTypes, _bookings, Options.Create(new OwnerOptions()), new FixedTimeProvider(Now));
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
