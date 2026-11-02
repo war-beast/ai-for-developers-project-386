@@ -232,7 +232,7 @@ public class BookingServiceTests
     }
 
     private void AddBooking(string eventTypeId, DateTimeOffset start, DateTimeOffset end) =>
-        _bookings.TryAdd(new BookingEntity
+        _bookings.Add(new BookingEntity
         {
             Id = Guid.NewGuid(),
             EventTypeId = eventTypeId,

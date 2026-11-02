@@ -35,20 +35,22 @@ public sealed class BookingService(
             return CreateBookingResult.SlotUnavailable();
         }
 
-        var entity = new BookingEntity
+        var end = start.AddMinutes(eventType.DurationMinutes);
+        var booking = Booking.TryCreate(
+            eventType,
+            start,
+            command.GuestName!,
+            command.GuestEmail!,
+            command.Comment,
+            bookingRepository.GetOverlapping(start, end),
+            timeProvider.GetUtcNow());
+        if (booking is null)
         {
-            Id = Guid.NewGuid(),
-            EventTypeId = eventType.Id,
-            Start = start,
-            End = start.AddMinutes(eventType.DurationMinutes),
-            GuestName = command.GuestName!.Trim(),
-            GuestEmail = command.GuestEmail!.Trim(),
-            Comment = string.IsNullOrWhiteSpace(command.Comment) ? null : command.Comment.Trim(),
-            CreatedAt = timeProvider.GetUtcNow(),
-        };
+            return CreateBookingResult.SlotAlreadyTaken();
+        }
 
-        return bookingRepository.TryAdd(entity)
-            ? CreateBookingResult.Success(ToModel(entity, eventType.Title))
+        return bookingRepository.Add(ToEntity(booking))
+            ? CreateBookingResult.Success(booking)
             : CreateBookingResult.SlotAlreadyTaken();
     }
 
@@ -59,8 +61,10 @@ public sealed class BookingService(
             .GetAll()
             .ToDictionary(type => type.Id, type => type.Title);
 
-        return bookingRepository.GetAll()
-            .Where(booking => booking.End > now)
+        // Луч (now, ∞): пересечение с ним равнозначно End > сейчас,
+        // включая идущую встречу.
+        return bookingRepository
+            .GetOverlapping(now, DateTimeOffset.MaxValue)
             .OrderBy(booking => booking.Start)
             .Select(booking => ToModel(booking, titles.GetValueOrDefault(booking.EventTypeId)))
             .ToList();
@@ -77,6 +81,19 @@ public sealed class BookingService(
             entity.GuestEmail,
             entity.Comment,
             entity.CreatedAt);
+
+    private static BookingEntity ToEntity(Booking booking) =>
+        new()
+        {
+            Id = booking.Id,
+            EventTypeId = booking.EventTypeId,
+            Start = booking.Start,
+            End = booking.End,
+            GuestName = booking.GuestName,
+            GuestEmail = booking.GuestEmail,
+            Comment = booking.Comment,
+            CreatedAt = booking.CreatedAt,
+        };
 
     private static Dictionary<string, string[]> Validate(CreateBookingCommand command)
     {

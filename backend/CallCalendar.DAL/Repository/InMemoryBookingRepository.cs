@@ -11,15 +11,16 @@ public sealed class InMemoryBookingRepository : IBookingRepository
     private readonly Lock _lock = new();
     private readonly List<BookingEntity> _bookings = [];
 
-    public IReadOnlyList<BookingEntity> GetAll()
+    public IReadOnlyList<BookingEntity> GetOverlapping(DateTimeOffset start, DateTimeOffset end)
     {
         lock (_lock)
         {
-            return [.. _bookings];
+            return [.. _bookings.Where(booking => BookingInterval.Overlaps(
+                start, end, booking.Start, booking.End))];
         }
     }
 
-    public bool TryAdd(BookingEntity booking)
+    public bool Add(BookingEntity booking)
     {
         lock (_lock)
         {

@@ -19,6 +19,13 @@ internal static class SlotGrid
         return (today.AddDays(1), today.AddDays(WindowDays));
     }
 
+    /// <summary>Начало календарного дня в поясе владельца.</summary>
+    public static DateTimeOffset DayStart(DateOnly date, TimeZoneInfo timeZone)
+    {
+        var moment = date.ToDateTime(TimeOnly.MinValue);
+        return new DateTimeOffset(moment, timeZone.GetUtcOffset(moment));
+    }
+
     public static IEnumerable<Slot> Slots(
         DateOnly date,
         int durationMinutes,
