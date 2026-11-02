@@ -1,0 +1,6 @@
+# Окончания строк для всех редакторов и dotnet format;
+# совпадает с .gitattributes (* text=auto eol=lf).
+root = true
+
+[*]
+end_of_line = lf
