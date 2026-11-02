@@ -3,20 +3,17 @@ using CallCalendar.BLL.Interface;
 using CallCalendar.BLL.Model;
 using CallCalendar.DAL.Entity;
 using CallCalendar.DAL.Interface;
-using Microsoft.Extensions.Options;
 
 namespace CallCalendar.BLL.Service;
 
 public sealed class BookingService(
     IEventTypeRepository eventTypeRepository,
     IBookingRepository bookingRepository,
-    IOptions<OwnerOptions> ownerOptions,
+    ISlotEngine slotEngine,
     TimeProvider timeProvider) : IBookingService
 {
     private const int MaxGuestEmailLength = 254;
     private const int MaxCommentLength = 500;
-
-    private readonly OwnerOptions options = ownerOptions.Value;
 
     public CreateBookingResult Create(CreateBookingCommand command)
     {
@@ -33,7 +30,7 @@ public sealed class BookingService(
         }
 
         var start = command.Start!.Value;
-        if (!SlotGrid.IsSlot(start, eventType.DurationMinutes, options, timeProvider))
+        if (!slotEngine.IsValidStart(start, eventType.DurationMinutes))
         {
             return CreateBookingResult.SlotUnavailable();
         }

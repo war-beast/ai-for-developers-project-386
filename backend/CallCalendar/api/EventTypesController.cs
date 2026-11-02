@@ -9,7 +9,7 @@ namespace CallCalendar.Api;
 [Route("api/event-types")]
 public sealed class EventTypesController(
     IEventTypeService eventTypeService,
-    ISlotService slotService,
+    ISlotEngine slotEngine,
     IProblemResultFactory problemFactory) : ControllerBase
 {
     /// <summary>Список типов встреч в порядке создания.</summary>
@@ -40,7 +40,7 @@ public sealed class EventTypesController(
     [HttpGet("{eventTypeId}/slots")]
     public IActionResult Slots(string eventTypeId)
     {
-        var result = slotService.GetWindow(eventTypeId);
+        var result = slotEngine.GetWindow(eventTypeId);
 
         return result.Window is not null
             ? Ok(result.Window)

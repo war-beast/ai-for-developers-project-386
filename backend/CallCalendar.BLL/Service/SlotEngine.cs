@@ -7,11 +7,12 @@ using Microsoft.Extensions.Options;
 
 namespace CallCalendar.BLL.Service;
 
-public sealed class SlotService(
+/// <summary>Единственный владелец правил слота: сетка, окно записи и занятые интервалы.</summary>
+public sealed class SlotEngine(
     IEventTypeRepository eventTypeRepository,
     IBookingRepository bookingRepository,
     IOptions<OwnerOptions> ownerOptions,
-    TimeProvider timeProvider) : ISlotService
+    TimeProvider timeProvider) : ISlotEngine
 {
     private readonly OwnerOptions options = ownerOptions.Value;
 
@@ -39,6 +40,9 @@ public sealed class SlotService(
             SlotGrid.StepMinutes,
             days));
     }
+
+    public bool IsValidStart(DateTimeOffset start, int durationMinutes) =>
+        SlotGrid.IsSlot(start, durationMinutes, options, timeProvider);
 
     private SlotDay BuildDay(
         DateOnly date,

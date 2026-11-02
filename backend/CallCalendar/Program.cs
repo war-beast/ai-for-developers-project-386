@@ -31,7 +31,7 @@ builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddTransient<IBookingService, BookingService>();
 builder.Services.Configure<OwnerOptions>(builder.Configuration.GetSection("Owner"));
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddTransient<ISlotService, SlotService>();
+builder.Services.AddTransient<ISlotEngine, SlotEngine>();
 builder.Services.AddTransient<IProblemResultFactory, ProblemResultFactory>();
 
 var app = builder.Build();

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace CallCalendar.Tests;
 
-public class SlotServiceTests
+public class SlotEngineTests
 {
     // Вторник, 27 октября 2026, 13:00 по Москве.
     private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.Zero);
@@ -20,7 +20,7 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var result = CreateService()
+        var result = CreateEngine()
             .GetWindow("intro-call");
 
         var window = Assert.IsType<SlotWindow>(result.Window);
@@ -40,7 +40,7 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", 30);
 
-        var window = CreateService()
+        var window = CreateEngine()
             .GetWindow("intro-call").Window!;
 
         Assert.Empty(window.Days.Single(day => day.Date == new DateOnly(2026, 10, 31)).Slots);
@@ -57,7 +57,7 @@ public class SlotServiceTests
     {
         AddEventType("intro-call", durationMinutes);
 
-        var slots = CreateService()
+        var slots = CreateEngine()
             .GetWindow("intro-call").Window!.Days[0].Slots;
 
         Assert.Equal(
@@ -78,7 +78,7 @@ public class SlotServiceTests
     {
         AddEventType("too-long", 600);
 
-        var window = CreateService()
+        var window = CreateEngine()
             .GetWindow("too-long").Window;
 
         Assert.NotNull(window);
@@ -101,7 +101,7 @@ public class SlotServiceTests
             CreatedAt = Now,
         });
 
-        var slots = CreateService()
+        var slots = CreateEngine()
             .GetWindow("intro-call").Window!.Days[0].Slots;
 
         Assert.DoesNotContain(slots, slot => slot.Start == new DateTimeOffset(2026, 10, 28, 10, 0, 0, MoscowOffset));
@@ -112,12 +112,35 @@ public class SlotServiceTests
     [Fact]
     public void UnknownEventTypeIsReportedAsNotFound()
     {
-        var result = CreateService()
+        var result = CreateEngine()
             .GetWindow("missing");
 
         Assert.Null(result.Window);
         Assert.True(result.EventTypeNotFound);
     }
+
+    [Fact]
+    public void ValidGridStartIsAccepted()
+    {
+        Assert.True(CreateEngine()
+            .IsValidStart(At(28, 10, 0), 30));
+    }
+
+    [Theory]
+    [InlineData(10, 28, 10, 15)] // не по шагу сетки
+    [InlineData(10, 27, 15, 0)] // сегодня — до начала окна записи
+    [InlineData(10, 31, 9, 0)] // суббота — не рабочий день
+    [InlineData(11, 11, 9, 0)] // за пределами окна записи
+    public void StartOutsideTheGridIsRejected(int month, int day, int hour, int minute)
+    {
+        Assert.False(CreateEngine()
+            .IsValidStart(
+                new DateTimeOffset(2026, month, day, hour, minute, 0, MoscowOffset),
+                30));
+    }
+
+    private static DateTimeOffset At(int day, int hour, int minute) =>
+        new(2026, 10, day, hour, minute, 0, MoscowOffset);
 
     private void AddEventType(string id, int durationMinutes) =>
         _eventTypes.TryAdd(new EventTypeEntity
@@ -128,7 +151,7 @@ public class SlotServiceTests
             DurationMinutes = durationMinutes,
         });
 
-    private SlotService CreateService() =>
+    private SlotEngine CreateEngine() =>
         new(_eventTypes, _bookings, Options.Create(new OwnerOptions()), new FixedTimeProvider(Now));
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
