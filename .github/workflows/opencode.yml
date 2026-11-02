@@ -43,4 +43,4 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }} # имя секрета зависит от провайдера в model
         with:
-          model: opencode/GLM-5.3
+          model: opencode/glm-5.3
