@@ -26,7 +26,11 @@ public sealed class SlotEngine(
 
         var timeZone = SlotGrid.TimeZone(options);
         var (windowStart, windowEnd) = SlotGrid.Window(options, timeProvider);
-        var bookings = bookingRepository.GetAll();
+        // Занятые интервалы окна одним запросом: слоты не выходят за его
+        // границы, записи вне окна пересечься со слотами не могут.
+        var bookings = bookingRepository.GetOverlapping(
+            SlotGrid.DayStart(windowStart, timeZone),
+            SlotGrid.DayStart(windowEnd.AddDays(1), timeZone));
 
         var days = Enumerable
             .Range(0, SlotGrid.WindowDays)

@@ -4,8 +4,13 @@ namespace CallCalendar.DAL.Interface;
 
 public interface IBookingRepository
 {
-    IReadOnlyList<BookingEntity> GetAll();
+    /// <summary>Записи, пересекающие полуинтервал [start, end).</summary>
+    IReadOnlyList<BookingEntity> GetOverlapping(DateTimeOffset start, DateTimeOffset end);
 
-    /// <summary>Добавляет запись, если она не пересекается ни с одной существующей.</summary>
-    bool TryAdd(BookingEntity booking);
+    /// <summary>
+    /// Атомарная вставка под блокировкой; false — если поверх записи уже
+    /// лежит пересекающая. Guard хранилища, аналог exclusion-constraint
+    /// в БД: решение об отклонении принимает агрегат «Запись».
+    /// </summary>
+    bool Add(BookingEntity booking);
 }
