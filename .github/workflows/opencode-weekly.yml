@@ -1,0 +1,208 @@
+name: Weekly Code Audit
+on:
+  schedule:
+    - cron: "17 9 * * 1" # Every Monday at 9:17 UTC
+  workflow_dispatch:
+concurrency:
+  group: weekly-code-audit
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read # только чтение: пуш и ветки/PR невозможны в принципе
+      issues: write # журнал аудита и issue на каждую находку; использует только workflow
+    env:
+      # read-only: агент не имеет shell, сети и доступа вне проекта —
+      # только встроенные read/grep/glob в пределах чекаута.
+      # opencode 2.2.5 читает права из OPENCODE_CONFIG_CONTENT (ключ
+      # «permission»); переменной OPENCODE_PERMISSION в этой версии нет —
+      # она молча игнорируется. Wildcard-правила матчат командную строку
+      # целиком вместе с опциями и редиректами (gh issue list > file
+      # разрешён шаблоном «gh issue list *», > "$GITHUB_ENV" отравляет
+      # следующие шаги), поэтому allow-правил нет вообще. Дефолт агента
+      # plan — «* * allow», поэтому явно запрещаем и внешние каталоги,
+      # и сеть; данные для дедупа агент получает файлом
+      OPENCODE_CONFIG_CONTENT: '{"permission":{"edit":"deny","bash":{"*":"deny"},"external_directory":"deny","webfetch":"deny","websearch":"deny"}}'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout v7
+        with:
+          persist-credentials: false
+      - name: Install OpenCode
+        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # jdx/mise-action v3
+        with:
+          # ad-hoc установка aqua-бэкендом (GitHub Releases, без npm и зависимости
+          # от node); opencode нет в [tools] mise.toml, чтобы mise install у
+          # разработчиков и check-джоба его не качали; версия пиннована здесь,
+          # как в opencode-review
+          install_args: aqua:anomalyco/opencode@2.2.5
+          cache_key_prefix: mise-weekly-audit-v1 # отдельный кэш: в check-джобе ставятся все инструменты
+      - name: Verify agent permissions
+        # fail-closed проверка инварианта целиком, а не отдельных правил:
+        # для каждого критичного действия нет ни одного allow и есть
+        # глобальный deny. Не полагаемся на имя env-переменной; API-ключ не нужен
+        run: |
+          set -euo pipefail
+          mise exec aqua:anomalyco/opencode@2.2.5 -- opencode --standalone debug agents > "$RUNNER_TEMP/agents.json"
+          jq -c '.[] | select(.id == "plan") | .permissions[] | {action, resource, effect}' "$RUNNER_TEMP/agents.json"
+          jq -e '
+            [.[] | select(.id == "plan")][0].permissions as $p
+            | [ "shell", "edit", "external_directory", "webfetch", "websearch" ] as $acts
+            | $acts
+              | map(. as $a
+                  | (($p | map(select(.action == $a and .effect == "allow")) | length) == 0)
+                    and ($p | any(.action == $a and .resource == "*" and .effect == "deny")))
+              | all
+          ' "$RUNNER_TEMP/agents.json" > /dev/null
+      - name: Run weekly audit
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }} # имя секрета зависит от провайдера в model
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # только для предзагрузки issues ниже; агенту shell запрещён
+        run: |
+          set -euo pipefail
+          # существующие аудиторские issues — вход для дедупа; агент читает файл
+          # встроенным read-инструментом (у агента нет shell и внешних запросов).
+          # --limit обязателен: дефолтное окно gh — 30 результатов
+          gh issue list --state all --limit 1000 --search 'аудит in:title' \
+            --json number,title > "$GITHUB_WORKSPACE/.weekly-audit-issues.json"
+          # mise exec пиннует ту же версию, что и install_args (ad-hoc, без записи в mise.toml)
+          timeout -k 10s 780s mise exec aqua:anomalyco/opencode@2.2.5 -- opencode run --print-logs --log-level info --model opencode/deepseek-v4.1-flash --agent plan --format json \
+            'Audit the repository for TODO, FIXME, and HACK comments, ignoring generated files and third-party dependencies. The file .weekly-audit-issues.json in the repository root lists the existing audit issues with their numbers and titles: a finding that matches one of them is already tracked - do not report it as new. You have no shell, no network access and no write access: do not modify files, do not create branches or pull requests, and do not create, comment on, or close any GitHub issue - the workflow does all the recording itself. Return a Markdown report: for each finding give the marker, file and line, the comment text, whether it is new or already tracked (with the issue number), and a proposed action; if there are no TODO, FIXME, or HACK comments at all, state that explicitly. At the very end of the report append a fenced json code block with exactly this shape: {"findings": [{"marker": "TODO", "file": "path/to/file", "line": 123, "comment": "comment text", "action": "proposed action", "issue": null}]} - set "issue" to the existing issue number for tracked findings, use {"findings": []} when there are none, and never wrap the json block in any other block.' \
+            < /dev/null | tee "$RUNNER_TEMP/opencode-audit.jsonl"
+          jq -sr 'map(select(.type == "text") | .part.text) | last // empty' \
+            "$RUNNER_TEMP/opencode-audit.jsonl" > "$RUNNER_TEMP/opencode-audit.md"
+          # пустой ответ модели = сбой: «аудит без находок» обязан быть явным текстом
+          test -s "$RUNNER_TEMP/opencode-audit.md"
+      - name: Create finding issues
+        # все записи в GitHub делает workflow, а не агент: у агента нет команд
+        # с файловыми побочными эффектами, а создание issues детерминировано
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # машинночитаемая часть отчёта — последний fenced json-блок
+          awk '/^```[jJ][sS][oO][nN][[:space:]]*$/{f=1;b="";next} /^```[[:space:]]*$/{if(f)out=b;f=0;next} f{b=b $0 "\n"} END{printf "%s",out}' \
+            "$RUNNER_TEMP/opencode-audit.md" > "$RUNNER_TEMP/findings.json"
+          # битый или отсутствующий json-блок = сбой (fail-closed)
+          jq -e '.findings | type == "array"' "$RUNNER_TEMP/findings.json" > /dev/null
+          # детерминированный дедуп: ключ — файл плюс текст комментария
+          # (номер строки неустойчив: комментарий, съехавший на другую строку,
+          # остаётся той же находкой); список заголовков — из предзагруженного
+          # .weekly-audit-issues.json, заголовки содержат текст комментария
+          TITLES=$(jq -r '.[].title' "$GITHUB_WORKSPACE/.weekly-audit-issues.json")
+          : > "$RUNNER_TEMP/created-issues.md"
+          while IFS= read -r finding; do
+            [ -n "$finding" ] || continue
+            marker=$(jq -r .marker <<<"$finding")
+            file=$(jq -r .file <<<"$finding")
+            line=$(jq -r .line <<<"$finding")
+            comment=$(jq -r .comment <<<"$finding")
+            action=$(jq -r .action <<<"$finding")
+            ref=$(jq -r '.issue // empty' <<<"$finding")
+            comment=${comment//$'\n'/ }
+            title="Аудит: $marker $file — ${comment:0:100}"
+            if grep -qxF "$title" <<<"$TITLES"; then
+              echo "Уже существует: $title"
+              continue
+            fi
+            # ссылка агента на существующий issue проверяется по предзагрузке:
+            # галлюцинация номера не должна молча прятать находку
+            case "$ref" in
+              ''|*[!0-9]*) ;;
+              *)
+                if jq -e --argjson n "$ref" 'any(.[]; .number == $n)' \
+                  "$GITHUB_WORKSPACE/.weekly-audit-issues.json" > /dev/null; then
+                  echo "Уже отслеживается (#$ref): $title"
+                  continue
+                fi
+                echo "::warning::агент сослался на несуществующий issue #$ref — создаю новую: $title"
+                ;;
+            esac
+            {
+              echo "- Маркер: $marker"
+              echo "- Файл: $file, строка $line"
+              echo "- Комментарий: $comment"
+              echo "- Предлагаемое действие: $action"
+              echo
+              echo "Найдено еженедельным аудитом TODO/FIXME/HACK — [запуск #$GITHUB_RUN_NUMBER]($RUN_URL)."
+            } > "$RUNNER_TEMP/finding-body.md"
+            URL=$(gh issue create --title "$title" --body-file "$RUNNER_TEMP/finding-body.md")
+            echo "- $title — $URL" >> "$RUNNER_TEMP/created-issues.md"
+            TITLES="$TITLES"$'\n'"$title"
+            echo "Создано: $title"
+          done < <(jq -c '.findings[]' "$RUNNER_TEMP/findings.json")
+      - name: Record audit result
+        # журнал — единственный переиспользуемый issue «Weekly Code Audit log»:
+        # один завершённый запуск = один комментарий со ссылкой на прогон.
+        # Запись делает сам workflow: гарантия «завершённый аудит отличим от
+        # сбоя» не зависит от модели
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # закреплённый номер журнала (repository variable): после первичного
+          # создания задайте gh variable set WEEKLY_AUDIT_LOG_ISSUE --body <номер>
+          LOG_ISSUE: ${{ vars.WEEKLY_AUDIT_LOG_ISSUE }}
+        run: |
+          set -euo pipefail
+          # для людей — текст до json-блока; сводка пишется до записи в журнал,
+          # чтобы сбой сводки не порождал повторную запись при re-run
+          awk '/^```[jJ][sS][oO][nN]/{exit} {print}' "$RUNNER_TEMP/opencode-audit.md" > "$RUNNER_TEMP/audit-display.md"
+          {
+            echo "## Weekly Code Audit — $(date -u +%Y-%m-%d)"
+            echo
+            cat "$RUNNER_TEMP/audit-display.md"
+            if [ -s "$RUNNER_TEMP/created-issues.md" ]; then
+              echo
+              echo "### Созданные issues"
+              cat "$RUNNER_TEMP/created-issues.md"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          # номер журнала закреплён переменной — поиск не нужен совсем; без
+          # переменной — bootstrap: поиск по точному заголовку (--limit 1000:
+          # дефолтное окно gh — 30), один журнал, дубликат не создаём никогда,
+          # неоднозначность — ошибка для ручного разбора; закрытый журнал
+          # используется, а не заменяется
+          if [ -n "$LOG_ISSUE" ]; then
+            NUMBER="$LOG_ISSUE"
+          else
+            MATCHES=$(gh issue list --state all --limit 1000 --search '"Weekly Code Audit log" in:title' \
+              --json number,title \
+              --jq '[.[] | select(.title == "Weekly Code Audit log")]')
+            COUNT=$(jq 'length' <<<"$MATCHES")
+            if [ "$COUNT" -gt 1 ]; then
+              echo "::error::issue «Weekly Code Audit log» не единственный ($COUNT шт.) — устраните дубликаты вручную"
+              exit 1
+            fi
+            if [ "$COUNT" -eq 1 ]; then
+              NUMBER=$(jq '.[0].number' <<<"$MATCHES")
+            else
+              URL=$(gh issue create --title "Weekly Code Audit log" \
+                --body "Журнал еженедельных аудитов TODO/FIXME/HACK. Каждый завершённый запуск оставляет здесь один комментарий со ссылкой на прогон; отсутствие записи означает сбой запуска.")
+              NUMBER=${URL##*/}
+              echo "::notice::закрепите журнал на будущее: gh variable set WEEKLY_AUDIT_LOG_ISSUE --body $NUMBER"
+            fi
+          fi
+          # повторный запуск того же прогона не дублирует комментарий;
+          # учитываются только записи этого workflow. GraphQL (gh issue view)
+          # отдаёт логин автора «github-actions», REST — «github-actions[bot]»,
+          # поэтому матчим оба написания
+          RECORDS=$(gh issue view "$NUMBER" --json comments \
+            --jq '.comments[] | select(.author.login == "github-actions[bot]" or .author.login == "github-actions") | .body')
+          if grep -qF "$RUN_URL" <<<"$RECORDS"; then
+            echo "Комментарий этого запуска уже есть в журнале #$NUMBER — повторно не публикую"
+            exit 0
+          fi
+          {
+            echo "## Аудит $(date -u +%Y-%m-%d) — [запуск #$GITHUB_RUN_NUMBER]($RUN_URL)"
+            echo
+            cat "$RUNNER_TEMP/audit-display.md"
+            if [ -s "$RUNNER_TEMP/created-issues.md" ]; then
+              echo
+              echo "### Созданные issues"
+              cat "$RUNNER_TEMP/created-issues.md"
+            fi
+          } > "$RUNNER_TEMP/audit-log-comment.md"
+          gh issue comment "$NUMBER" --body-file "$RUNNER_TEMP/audit-log-comment.md"
