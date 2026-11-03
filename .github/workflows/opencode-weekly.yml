@@ -21,10 +21,14 @@ jobs:
       # она молча игнорируется. Wildcard-правила матчат командную строку
       # целиком вместе с опциями и редиректами (gh issue list > file
       # разрешён шаблоном «gh issue list *», > "$GITHUB_ENV" отравляет
-      # следующие шаги), поэтому allow-правил нет вообще. Дефолт агента
-      # plan — «* * allow», поэтому явно запрещаем и внешние каталоги,
-      # и сеть; данные для дедупа агент получает файлом
-      OPENCODE_CONFIG_CONTENT: '{"permission":{"edit":"deny","bash":{"*":"deny"},"external_directory":"deny","webfetch":"deny","websearch":"deny"}}'
+      # следующие шаги), поэтому allow-правил для shell нет вообще.
+      # Дефолт агента plan — «* * allow», поэтому явно запрещаем и внешние
+      # каталоги, и сеть. Для edit оставлен единственный узкий allow —
+      # служебная папка заметок самого opencode (~/.opencode/plan/*):
+      # она существует в дефолтах агента plan, лежит вне репозитория
+      # и нужна его внутреннему механизму планирования. Данные для
+      # дедупа агент получает файлом
+      OPENCODE_CONFIG_CONTENT: '{"permission":{"edit":{"*":"deny","~/.opencode/plan/*":"allow"},"bash":{"*":"deny"},"external_directory":"deny","webfetch":"deny","websearch":"deny"}}'
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # actions/checkout v7
@@ -40,21 +44,24 @@ jobs:
           install_args: aqua:anomalyco/opencode@2.2.5
           cache_key_prefix: mise-weekly-audit-v1 # отдельный кэш: в check-джобе ставятся все инструменты
       - name: Verify agent permissions
-        # fail-closed проверка инварианта целиком, а не отдельных правил:
-        # для каждого критичного действия нет ни одного allow и есть
-        # глобальный deny. Не полагаемся на имя env-переменной; API-ключ не нужен
+        # fail-closed проверка инварианта: для shell и сетевых действий нет
+        # ни одного allow и есть глобальный deny; для edit глобальный deny
+        # обязателен, но allow допустимы только как узкие платформенные
+        # исключения (~/.opencode/plan/*), которые этот deny перекрывает
+        # вне своей области. Проверено на реальном выводе debug agents
+        # раннера. Не полагаемся на имя env-переменной; API-ключ не нужен
         run: |
           set -euo pipefail
           mise exec aqua:anomalyco/opencode@2.2.5 -- opencode --standalone debug agents > "$RUNNER_TEMP/agents.json"
           jq -c '.[] | select(.id == "plan") | .permissions[] | {action, resource, effect}' "$RUNNER_TEMP/agents.json"
           jq -e '
             [.[] | select(.id == "plan")][0].permissions as $p
-            | [ "shell", "edit", "external_directory", "webfetch", "websearch" ] as $acts
-            | $acts
-              | map(. as $a
-                  | (($p | map(select(.action == $a and .effect == "allow")) | length) == 0)
-                    and ($p | any(.action == $a and .resource == "*" and .effect == "deny")))
-              | all
+            | (["shell", "external_directory", "webfetch", "websearch"]
+                | all(. as $a
+                    | (($p | map(select(.action == $a and .effect == "allow")) | length) == 0)))
+              and (["shell", "edit", "external_directory", "webfetch", "websearch"]
+                | all(. as $a
+                    | ($p | any(.action == $a and .resource == "*" and .effect == "deny"))))
           ' "$RUNNER_TEMP/agents.json" > /dev/null
       - name: Run weekly audit
         env:
